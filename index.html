@@ -8,6 +8,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <style>
 :root{--bg:#f5f6fa;--surface:#ffffff;--surface2:#f0f1f7;--border:#e4e6f0;--accent:#5a67f2;--accent2:#38c8a8;--accent3:#f5a623;--accent4:#e8445a;--plage:#ff9f43;--text:#1a1d2e;--text2:#6b7099;--shadow:0 2px 12px rgba(90,103,242,0.08);--shadow-md:0 4px 24px rgba(90,103,242,0.13);}
 *{box-sizing:border-box;margin:0;padding:0;}
@@ -125,6 +127,8 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-
 .slot-container{min-height:60px;display:flex;flex-direction:column;gap:3px;}
 /* ACTIVITY CARDS */
 .activity-card{border-radius:7px;padding:4px 7px;font-size:0.74rem;font-weight:600;cursor:grab;display:flex;align-items:center;justify-content:space-between;gap:3px;transition:all .18s;border:1.5px solid transparent;user-select:none;box-shadow:0 1px 3px rgba(0,0,0,.06);position:relative;}
+.clone-mode .activity-card{cursor:copy;}
+.slot-container.clone-drop-target{outline:2px dashed var(--accent);background:rgba(100,120,255,.07);}
 .activity-card:hover{transform:translateY(-1px);box-shadow:0 3px 10px rgba(0,0,0,.1);}
 .activity-card.sortable-drag{opacity:.35;}
 .activity-card.sortable-ghost{border:2px dashed var(--accent);background:#eef0ff!important;opacity:.5;}
@@ -211,6 +215,39 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-
 .app-toast{background:var(--text);color:#fff;padding:9px 14px;border-radius:9px;font-size:0.82rem;font-weight:500;box-shadow:var(--shadow-md);animation:toastIn .3s ease,toastOut .3s ease 2.7s forwards;pointer-events:none;}
 @keyframes toastIn{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
 @keyframes toastOut{to{opacity:0;transform:translateY(8px)}}
+/* SPOTLIGHT */
+.card-dimmed{opacity:.13;filter:grayscale(1);pointer-events:none;transition:opacity .2s,filter .2s;}
+.agent-item-wrap.spotlight-active{border:1.5px solid var(--accent)!important;background:#eef0ff!important;}
+.agent-item-wrap.spotlight-dim{opacity:.38;transition:opacity .2s;}
+/* PDF MODAL */
+.pdf-choice-row{display:flex;align-items:center;gap:10px;padding:9px 11px;border-radius:9px;border:1.5px solid var(--border);background:var(--surface2);margin-bottom:7px;cursor:pointer;transition:all .15s;}
+.pdf-choice-row:hover{border-color:var(--accent);background:#eef0ff;}
+.pdf-choice-row.selected{border-color:var(--accent);background:#eef0ff;}
+.pdf-choice-row input[type=radio]{accent-color:var(--accent);width:15px;height:15px;cursor:pointer;flex-shrink:0;}
+.pdf-choice-label{font-size:.83rem;font-weight:600;color:var(--text);}
+.pdf-choice-sub{font-size:.7rem;color:var(--text2);margin-top:1px;}
+/* STATS MODAL */
+.stats-table{width:100%;border-collapse:collapse;font-size:.75rem;}
+.stats-table th{background:var(--surface2);padding:5px 8px;text-align:left;font-size:.68rem;font-weight:700;color:var(--text2);border-bottom:1.5px solid var(--border);}
+.stats-table td{padding:4px 8px;border-bottom:1px solid var(--border);vertical-align:middle;}
+.equity-warn{font-size:.62rem;font-weight:700;background:#fff3e0;color:#b85c00;border-radius:4px;padding:1px 5px;border:1px solid #f8d8a0;}
+.equity-ok{font-size:.62rem;font-weight:700;background:#e8faf4;color:#1a9e74;border-radius:4px;padding:1px 5px;}
+/* AGENT RECAP */
+.agent-recap-grid{display:flex;flex-direction:column;gap:3px;margin-top:5px;}
+.recap-day-row{display:flex;align-items:stretch;gap:3px;}
+.recap-day-lbl{font-size:.55rem;font-weight:700;color:var(--text2);width:16px;flex-shrink:0;text-transform:uppercase;display:flex;align-items:center;}
+.recap-slot-chip{flex:1;border-radius:4px;padding:2px 4px;font-size:.56rem;font-weight:600;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border:1px solid transparent;}
+/* PLANNED ABSENCES */
+.absence-row{display:flex;align-items:center;gap:6px;padding:6px 9px;border-radius:8px;border:1.5px solid var(--border);background:var(--surface2);margin-bottom:5px;flex-wrap:wrap;}
+.absence-agent-dot{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.55rem;font-weight:700;color:#fff;flex-shrink:0;}
+.absence-del{background:none;border:none;color:#c0293c;cursor:pointer;font-size:.82rem;padding:2px 5px;border-radius:4px;}
+.absence-del:hover{background:#fff0f2;}
+/* CHANGELOG */
+.changelog-entry{display:flex;align-items:flex-start;gap:7px;padding:6px 9px;border-radius:8px;background:var(--surface2);margin-bottom:4px;border:1.5px solid var(--border);}
+.changelog-time{font-size:.6rem;color:var(--text2);white-space:nowrap;flex-shrink:0;font-family:'DM Mono',monospace;margin-top:1px;}
+.changelog-desc{font-size:.74rem;color:var(--text);}
+/* EQUITY SIDEBAR BADGE */
+.equity-sidebar-warn{font-size:.52rem;font-weight:700;background:#fff3e0;color:#b85c00;border-radius:3px;padding:0 3px;margin-left:3px;}
 /* ACTIVITY COLORS */
 .act-ap{background:#e8f0ff;color:#3355cc;border-color:#c0d0f8;}
 .act-dyn{background:#fff3e0;color:#b85c00;border-color:#f8d8a0;}
@@ -271,6 +308,12 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-
   .app-header{padding:0 10px;}
   .btn-label{display:none;}
 }
+.sync-indicator{display:inline-flex;align-items:center;gap:4px;font-size:0.74rem;font-weight:600;padding:5px 10px;border-radius:8px;transition:all .3s;}
+.sync-ok{background:#e8faf4;color:#1a9e74;border:1.5px solid #b0f0dd;}
+.sync-err{background:#fff0f2;color:#c0293c;border:1.5px solid #ffc0c8;}
+.sync-loading{background:#e8f0ff;color:#3355cc;border:1.5px solid #c0d0f8;}
+.user-name-chip{display:flex;align-items:center;gap:4px;font-size:0.74rem;font-weight:600;padding:5px 9px;border-radius:8px;background:#f5eef8;color:#7d3c98;border:1.5px solid #d7bde2;cursor:pointer;white-space:nowrap;}
+.user-name-chip:hover{background:#ede0f5;}
 </style>
 </head>
 <body>
@@ -285,12 +328,16 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-
     <span class="app-title-text" id="headerTitle">Planning Équipe Essentiel</span>
   </div>
   <div class="header-actions">
+    <div id="syncIndicator" class="sync-indicator sync-loading">⏳ Connexion…</div>
+    <div class="user-name-chip" onclick="openUserNameModal()" title="Votre prénom">👤 <span id="userNameDisplay">—</span></div>
     <div id="lockBadge" class="lock-badge unlocked" onclick="toggleLock()">🔓 <span id="lockLabel">Non verrouillé</span></div>
+    <button class="btn-app btn-secondary-app" onclick="openStatsModal()"><span>📊</span><span class="btn-label">Stats</span></button>
     <button class="btn-app btn-team-app" onclick="openTeamModal()"><span>👥</span><span class="btn-label">Équipe</span></button>
+    <button class="btn-app btn-warning-app" onclick="openPlannedAbsencesModal()"><span>📅</span><span class="btn-label">Absences</span></button>
     <button class="btn-app btn-plage-app" onclick="openAddPlageModal()"><span>🚧</span><span class="btn-label">Plage</span></button>
     <button class="btn-app btn-refresh-app" onclick="refreshPlanning()"><span>🔄</span><span class="btn-label">Actualiser</span></button>
     <button class="btn-app btn-primary-app" onclick="generatePlanning()"><span>⚡</span><span class="btn-label">Générer</span></button>
-    <button class="btn-app btn-success-app" onclick="exportPDF()"><span>📄</span><span class="btn-label">PDF</span></button>
+    <button class="btn-app btn-success-app" onclick="openPdfModal()"><span>📄</span><span class="btn-label">PDF</span></button>
     <button class="btn-app btn-admin-app" onclick="openAdminModal()"><span>⚙️</span><span class="btn-label">Admin</span></button>
   </div>
 </div>
@@ -303,10 +350,11 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-
     <button class="btn-week" onclick="changeWeek(1)">›</button>
   </div>
   <button class="btn-app btn-secondary-app" style="font-size:0.76rem;padding:5px 10px;" onclick="goToCurrentWeek()">Semaine actuelle</button>
-  <select class="history-select" id="historySelect" onchange="loadFromHistory(this.value)">
-    <option value="">📂 Historique…</option>
-  </select>
-  <button class="btn-app btn-secondary-app" style="font-size:0.76rem;padding:5px 10px;" onclick="openHistoryModal()">🗂 Gérer historique</button>
+  <button class="btn-app btn-secondary-app" style="font-size:0.76rem;padding:5px 10px;" onclick="saveTemplate()" title="Sauvegarder comme modèle">💾 Modèle</button>
+  <button class="btn-app btn-secondary-app" style="font-size:0.76rem;padding:5px 10px;" id="btnApplyTemplate" onclick="applyTemplate()" title="Appliquer le modèle" style="display:none;">📋 Appliquer</button>
+  <button class="btn-app btn-secondary-app" style="font-size:0.76rem;padding:5px 10px;" onclick="copyWeek()" title="Copier cette semaine">📋 Copier</button>
+  <button class="btn-app btn-secondary-app" style="font-size:0.76rem;padding:5px 10px;" id="btnPasteWeek" onclick="pasteWeek()" title="Coller la semaine copiée" style="display:none;">📋 Coller</button>
+  <button class="btn-app btn-secondary-app" style="font-size:0.76rem;padding:5px 10px;" onclick="openHistoryModal()">🗂 Historique</button>
 </div>
 
 <div class="app-body">
@@ -336,6 +384,10 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-
       <div class="sidebar-title">Légende</div>
       <div class="legend-grid" id="legendGrid"></div>
       <div class="legend-item" style="margin-top:5px;"><div class="legend-dot" style="background:#ff9f43;border:1.5px dashed #ff9f43;"></div><span>Plage contrainte</span></div>
+    </div>
+    <div class="sidebar-section" id="agentRecapSection" style="display:none;">
+      <div class="sidebar-title" id="agentRecapTitle">Récap agent <span class="sidebar-title-action" onclick="setSpotlight(null)">✕ Fermer</span></div>
+      <div id="agentRecapZone"></div>
     </div>
   </div>
 
@@ -488,14 +540,15 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-
 <!-- MODAL HISTORY -->
 <div class="modal-overlay" id="modalHistory" style="display:none;">
   <div class="modal-box modal-box-lg">
-    <div class="modal-title">🗂 Gérer l'historique</div>
-    <div style="display:flex;gap:7px;margin-bottom:12px;flex-wrap:wrap;">
-      <button class="btn-app btn-secondary-app" onclick="selectAllHistory(true)">Tout sélectionner</button>
-      <button class="btn-app btn-secondary-app" onclick="selectAllHistory(false)">Tout désélectionner</button>
-      <button class="btn-app btn-danger-app" onclick="deleteSelectedHistory()">🗑 Supprimer sélection</button>
-      <button class="btn-app btn-danger-app" onclick="deleteAllHistory()">🗑 Vider l'historique</button>
+    <div class="modal-title">🗂 Historique des semaines</div>
+    <div style="font-size:.74rem;color:var(--text2);margin-bottom:10px;">Cliquez sur une semaine pour la charger. Cochez + supprimez pour libérer de l'espace.</div>
+    <div style="display:flex;gap:7px;margin-bottom:10px;flex-wrap:wrap;">
+      <button class="btn-app btn-secondary-app" style="font-size:.74rem;" onclick="selectAllHistory(true)">Tout sélectionner</button>
+      <button class="btn-app btn-secondary-app" style="font-size:.74rem;" onclick="selectAllHistory(false)">Tout désélectionner</button>
+      <button class="btn-app btn-danger-app" style="font-size:.74rem;" onclick="deleteSelectedHistory()">🗑 Supprimer sélection</button>
+      <button class="btn-app btn-danger-app" style="font-size:.74rem;margin-left:auto;" onclick="deleteAllHistory()">🗑 Tout vider</button>
     </div>
-    <div id="historyList" style="max-height:360px;overflow-y:auto;"></div>
+    <div id="historyList" style="max-height:380px;overflow-y:auto;"></div>
     <div class="modal-actions" style="margin-top:12px;">
       <button class="btn-app btn-secondary-app" onclick="closeModal('modalHistory')">Fermer</button>
     </div>
@@ -518,15 +571,147 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-
 
 <script>
 // ============================================================
+// 🔥 FIREBASE CONFIG — Remplacez par vos valeurs
+// console.firebase.google.com → votre projet → ⚙️ → Config app web
+// ============================================================
+const FIREBASE_CONFIG = {
+  apiKey:            "VOTRE_API_KEY",
+  authDomain:        "VOTRE_PROJET.firebaseapp.com",
+  databaseURL:       "https://VOTRE_PROJET-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId:         "VOTRE_PROJET",
+  storageBucket:     "VOTRE_PROJET.appspot.com",
+  messagingSenderId: "VOTRE_SENDER_ID",
+  appId:             "VOTRE_APP_ID"
+};
+
+let db = null;
+let _fbSaving = false;
+let _fbWeekRef = null;
+let _fbWeekKey = null;
+let userName = localStorage.getItem('ft-user-name') || '';
+
+function initFirebase() {
+  try {
+    firebase.initializeApp(FIREBASE_CONFIG);
+    db = firebase.database();
+    db.ref('.info/connected').on('value', snap => updateSyncUI(snap.val() === true));
+    return true;
+  } catch(e) { console.error('Firebase:', e); updateSyncUI(false); return false; }
+}
+
+function updateSyncUI(online) {
+  const el = document.getElementById('syncIndicator');
+  if (!el) return;
+  el.textContent = online ? '🟢 En ligne' : '🔴 Hors ligne';
+  el.className = 'sync-indicator ' + (online ? 'sync-ok' : 'sync-err');
+}
+
+function listenToCurrentWeek() {
+  if (!db) return;
+  const key = getWeekKey(currentWeekOffset);
+  if (_fbWeekRef) { _fbWeekRef.off(); _fbWeekRef = null; _fbWeekKey = null; }
+  _fbWeekKey = key;
+  _fbWeekRef = db.ref('planning/weeks/' + key);
+  _fbWeekRef.on('value', snap => {
+    if (_fbSaving) return;
+    const data = snap.val();
+    if (!data) return;
+    planningData   = data.planningData  || {};
+    plageData      = data.plageData     || {};
+    agentNotes     = data.agentNotes    || {};
+    ferieData      = data.ferieData     || {};
+    locked         = !!data.locked;
+    if (data.presence) {
+      presence = data.presence;
+      AGENTS.forEach(a => {
+        if (!presence[a] || typeof presence[a] === 'boolean') {
+          const v = typeof presence[a] === 'boolean' ? presence[a] : true;
+          presence[a] = {}; DAYS.forEach(d => presence[a][d] = v);
+        }
+      });
+    }
+    planningHistory[key] = data;
+    updateLockUI(); renderFerieGrid(); renderAll();
+    const who = data.lastModifiedBy;
+    if (who && who !== (userName || 'Anonyme')) showToast('🔄 ' + who + ' a modifié le planning');
+  });
+  db.ref('planning/config').on('value', snap => {
+    if (_fbSaving) return;
+    const cfg = snap.val(); if (!cfg) return;
+    if (cfg.appTitle && cfg.appTitle !== appTitle) applyTitle(cfg.appTitle);
+    if (cfg.agents && JSON.stringify(cfg.agents) !== JSON.stringify(AGENTS)) {
+      AGENTS = cfg.agents; AGENT_COLORS = cfg.colors || {};
+      renderAgents();
+    }
+    if (cfg.rules) fixedRules = cfg.rules;
+    if (cfg.activities) { ACTIVITIES = cfg.activities; ACTIVITIES.forEach(a => ensureActivityStyle(a, ACT_COLORS_HEX[a]||'#888')); renderLegend(); }
+    if (cfg.activityColors) Object.assign(ACT_COLORS_HEX, cfg.activityColors);
+  });
+}
+
+async function fbSaveWeek() {
+  const key = getWeekKey(currentWeekOffset);
+  const weekData = {
+    planningData:  JSON.parse(JSON.stringify(planningData)),
+    plageData:     JSON.parse(JSON.stringify(plageData)),
+    agentNotes:    JSON.parse(JSON.stringify(agentNotes)),
+    ferieData:     JSON.parse(JSON.stringify(ferieData)),
+    locked,
+    presence:      JSON.parse(JSON.stringify(presence)),
+    savedAt:       new Date().toISOString(),
+    weekLabel:     formatWeekDisplay(currentWeekOffset),
+    lastModifiedBy: userName || 'Anonyme'
+  };
+  const cfg = {
+    appTitle, agents: AGENTS, colors: AGENT_COLORS,
+    rules: fixedRules, activities: ACTIVITIES,
+    activityColors: ACT_COLORS_HEX, setupDone: true
+  };
+  planningHistory[key] = weekData;
+  localStorage.setItem('ft-week', String(currentWeekOffset));
+  if (db) {
+    _fbSaving = true;
+    try {
+      await db.ref('planning/weeks/' + key).set(weekData);
+      await db.ref('planning/config').set(cfg);
+    } catch(e) { showToast('⚠️ Erreur sync Firebase'); }
+    finally { setTimeout(() => { _fbSaving = false; }, 400); }
+  } else {
+    localStorage.setItem('ft-history', JSON.stringify(planningHistory));
+    localStorage.setItem('ft-presence', JSON.stringify(presence));
+    localStorage.setItem('ft-team', JSON.stringify({agents:AGENTS,colors:AGENT_COLORS}));
+    localStorage.setItem('ft-rules', JSON.stringify(fixedRules));
+    localStorage.setItem('ft-activities', JSON.stringify(ACTIVITIES));
+    localStorage.setItem('ft-activity-colors', JSON.stringify(ACT_COLORS_HEX));
+    localStorage.setItem('ft-title', appTitle);
+  }
+}
+
+function openUserNameModal() {
+  document.getElementById('userNameInput').value = userName;
+  document.getElementById('modalUserName').style.display = 'flex';
+  setTimeout(() => document.getElementById('userNameInput').focus(), 80);
+}
+function saveUserName() {
+  const v = document.getElementById('userNameInput').value.trim();
+  if (!v) { showToast('⚠ Saisissez votre prénom'); return; }
+  userName = v;
+  localStorage.setItem('ft-user-name', v);
+  document.getElementById('userNameDisplay').textContent = v;
+  closeModal('modalUserName');
+  showToast('👤 Bonjour ' + v + ' !');
+}
+
+// ============================================================
 // CONSTANTS
 // ============================================================
-const AGENTS_DEFAULT=['Selim','Marvin','Michelle','Charlotte','Emilien'];
-const AGENT_COLORS_DEFAULT={Selim:'#5a67f2',Marvin:'#38c8a8',Michelle:'#f5a623',Charlotte:'#e8445a',Emilien:'#7c5cbf'};
+const AGENTS_DEFAULT=['Selim','Michelle','Charlotte','Emilien'];
+const AGENT_COLORS_DEFAULT={Selim:'#5a67f2',Michelle:'#f5a623',Charlotte:'#e8445a',Emilien:'#7c5cbf'};
 const COLOR_PALETTE=['#5a67f2','#38c8a8','#f5a623','#e8445a','#7c5cbf','#20b2aa','#e07b50','#3a9bd5','#c06080','#60a060'];
-const ACTIVITIES_DEFAULT=['A&P','DYN / MER','CVM','Dossier transversal','Corner Essentiel','Permanence Visio','Back Office',"Segmentation travail d'équipe",'Collectif Visio','Collectif Physique','Libre','Jeudi de la collab'];
+const ACTIVITIES_DEFAULT=['A&P','DYN / MER','CVM','Dossier transversal','Corner Essentiel','Permanence Visio','Back Office',"Segmentation travail d'équipe",'Collectif Visio','Collectif Physique','Libre'];
 let ACTIVITIES=[...ACTIVITIES_DEFAULT];
-const ACT_CLASS={'A&P':'act-ap','DYN / MER':'act-dyn','CVM':'act-cvm','Dossier transversal':'act-dossier','Corner Essentiel':'act-corner','Permanence Visio':'act-visio','Back Office':'act-bo',"Segmentation travail d'équipe":'act-seg','Collectif Visio':'act-colvision','Collectif Physique':'act-colphys','Libre':'act-libre','Jeudi de la collab':'act-collab'};
-const ACT_COLORS_HEX={'A&P':'#3355cc','DYN / MER':'#b85c00','CVM':'#8833bb','Dossier transversal':'#1a7a58','Corner Essentiel':'#886600','Permanence Visio':'#1155aa','Back Office':'#5533aa',"Segmentation travail d'équipe":'#007755','Collectif Visio':'#aa2266','Collectif Physique':'#aa5500','Libre':'#555','Jeudi de la collab':'#9b59b6'};
+const ACT_CLASS={'A&P':'act-ap','DYN / MER':'act-dyn','CVM':'act-cvm','Dossier transversal':'act-dossier','Corner Essentiel':'act-corner','Permanence Visio':'act-visio','Back Office':'act-bo',"Segmentation travail d'équipe":'act-seg','Collectif Visio':'act-colvision','Collectif Physique':'act-colphys','Libre':'act-libre'};
+const ACT_COLORS_HEX={'A&P':'#3355cc','DYN / MER':'#b85c00','CVM':'#8833bb','Dossier transversal':'#1a7a58','Corner Essentiel':'#886600','Permanence Visio':'#1155aa','Back Office':'#5533aa',"Segmentation travail d'équipe":'#007755','Collectif Visio':'#aa2266','Collectif Physique':'#aa5500','Libre':'#555'};
 const DAYS=['Lundi','Mardi','Mercredi','Jeudi','Vendredi'];
 const SLOTS=['Matin','Après-midi'];
 const DEFAULT_TITLE='Planning Équipe Essentiel';
@@ -535,13 +720,8 @@ const DEFAULT_TITLE='Planning Équipe Essentiel';
 // RÈGLES FIXES CONFIGURABLES
 // ============================================================
 const DEFAULT_RULES=[
-  {id:'r1',day:'Jeudi',slot:'Matin',activity:'Dossier transversal',agents:[],minAgents:0,desc:"Dossier transversal — toute l'équipe",enabled:true},
-  {id:'r2',day:'Mercredi',slot:'Après-midi',activity:"Segmentation travail d'équipe",agents:[],minAgents:0,desc:"Segmentation — toute l'équipe",enabled:true},
-  {id:'r3',day:'Vendredi',slot:'Après-midi',activity:'Libre',agents:[],minAgents:0,desc:"Plage libre — toute l'équipe",enabled:true},
-  {id:'r4',day:'Lundi',slot:'Matin',activity:'CVM',agents:[],minAgents:2,desc:'2 agents minimum en CVM le lundi matin',enabled:true},
-  {id:'r5',day:'Mardi',slot:'Matin',activity:'Permanence Visio',agents:[],minAgents:0,desc:"Permanence Visio — toute l'équipe le mardi matin",enabled:true},
-  {id:'r6',day:'Mardi',slot:'Après-midi',activity:'Permanence Visio',agents:[],minAgents:0,desc:"Permanence Visio — toute l'équipe le mardi après-midi",enabled:true},
-  {id:'r7',day:'Jeudi',slot:'Après-midi',activity:'Jeudi de la collab',agents:[],minAgents:0,desc:"Jeudi de la collab — toute l'équipe (non bloquant)",enabled:true,nonBlocking:true}
+  {id:'r1',type:'activity',day:'Lundi',slot:'Matin',activity:'CVM',agents:[],minAgents:2,desc:'2 agents minimum en CVM le lundi matin',enabled:true},
+  {id:'r2',type:'activity',day:'Vendredi',slot:'Après-midi',activity:'Libre',agents:[],minAgents:0,desc:"Plage libre — toute l'équipe le vendredi après-midi",enabled:true}
 ];
 let fixedRules=DEFAULT_RULES.map(r=>({...r}));
 
@@ -549,17 +729,17 @@ let fixedRules=DEFAULT_RULES.map(r=>({...r}));
 // EASTER EGGS STATE
 // ============================================================
 const EE_QUOTES=[
+  "🚀 L'équipe Essentiel de Digne-les-Bains (04) a créé ce planning interactif inspiré du 5ème marqueur de l'essentiel : l'IA & le Numérique au service de l'humain",
   "🌟 Le travail d'équipe divise la tâche et multiplie le succès. — Emilien Cantone",
-  "💪 Ensemble, chaque défi devient une opportunité. — Emilien Cantone",
-  "🚀 Une équipe soudée est inarrêtable. — Emilien Cantone",
+  "💪 Ensemble, chaque défi devient une opportunité. — Michelle L",
+  "🚀 Une équipe soudée est inarrêtable. — Selim E",
   "✨ La bienveillance est le moteur de la performance. — Charlotte C",
   "🎯 Chaque petit pas ensemble construit quelque chose de grand. — Selim E",
   "🌈 La diversité des talents fait la force de l'équipe. — Emilien Cantone",
   "🤝 Se réunir est un début, rester ensemble est un progrès. — Michelle L",
-  "💡 Les meilleures idées naissent de la collaboration. — Emilien Cantone",
+  "💡 Les meilleures idées naissent de la collaboration. — Charlotte C",
   "🌻 Prendre soin les uns des autres, c'est prendre soin du collectif. — Emilien Cantone",
-  "🎉 Chaque journée bien organisée est une victoire ! — Emilien Cantone",
-  "🚀 L'équipe Essentiel de Digne-les-Bains (04) a créé ce planning interactif inspiré du 5ème marqueur de l'essentiel : l'IA & le Numérique au service de l'humain",
+  "🎉 Chaque journée bien organisée est une victoire ! — Selim E",
   "👋🏻 Jordan notre REA vous passe le bonjour !"
 ];
 let logoClickCount=0,logoClickTimer=null,eeQuoteIdx=0;
@@ -580,6 +760,7 @@ let locked=false;
 let planningHistory={};
 let appTitle=DEFAULT_TITLE;
 let _noteTarget=null;
+let spotlightAgent=null;
 
 function ensureActivityStyle(name,color){
   if(ACT_CLASS[name])return;
@@ -597,22 +778,57 @@ function getWeekKey(offset){
   return `${m.getFullYear()}-W${String(getWeekNumber(m)).padStart(2,'0')}`;
 }
 
-function initState(){
+async function initState(){
+  loadPlannedAbsences(); loadTemplate(); loadChangeLog();
+  const sw = localStorage.getItem('ft-week');
+  currentWeekOffset = sw ? parseInt(sw) : 0;
+  const si = document.getElementById('syncIndicator');
+  if (si) { si.textContent = '⏳ Chargement…'; si.className = 'sync-indicator sync-loading'; }
+  const fbOk = initFirebase();
+  if (fbOk && db) {
+    try {
+      const cfgSnap = await db.ref('planning/config').get();
+      if (cfgSnap.exists()) {
+        const cfg = cfgSnap.val();
+        if (cfg.appTitle) appTitle = cfg.appTitle;
+        if (cfg.agents && cfg.agents.length) { AGENTS = cfg.agents; AGENT_COLORS = cfg.colors || {}; }
+        if (cfg.rules) fixedRules = cfg.rules;
+        if (cfg.activities) ACTIVITIES = cfg.activities;
+        if (cfg.activityColors) Object.assign(ACT_COLORS_HEX, cfg.activityColors);
+        ACTIVITIES.forEach(a => ensureActivityStyle(a, ACT_COLORS_HEX[a]||'#888'));
+      } else { _loadConfigFromLS(); }
+      const weeksSnap = await db.ref('planning/weeks').get();
+      if (weeksSnap.exists()) planningHistory = weeksSnap.val() || {};
+      const wSnap = await db.ref('planning/weeks/' + getWeekKey(currentWeekOffset)).get();
+      if (wSnap.exists()) {
+        const w = wSnap.val();
+        planningData = w.planningData||{}; plageData = w.plageData||{};
+        agentNotes = w.agentNotes||{}; ferieData = w.ferieData||{};
+        locked = !!w.locked;
+        if (w.presence) {
+          presence = w.presence;
+          AGENTS.forEach(a => { if(!presence[a]){presence[a]={};DAYS.forEach(d=>presence[a][d]=true);} });
+        } else { _initPresence(); }
+      } else { _initPresence(); }
+      listenToCurrentWeek();
+    } catch(e) { console.error(e); _loadConfigFromLS(); _initPresence(); }
+  } else { _loadConfigFromLS(); _initPresence(); }
+  applyPlannedAbsencesForCurrentWeek();
+}
+function _loadConfigFromLS(){
   const savedTeam=localStorage.getItem('ft-team');
   if(savedTeam){const t=JSON.parse(savedTeam);AGENTS=t.agents||[...AGENTS_DEFAULT];AGENT_COLORS=t.colors||{...AGENT_COLORS_DEFAULT};}
   const savedRules=localStorage.getItem('ft-rules');
   if(savedRules){try{fixedRules=JSON.parse(savedRules);}catch(e){fixedRules=DEFAULT_RULES.map(r=>({...r}));}}
-  const savedActivities=localStorage.getItem('ft-activities');
-  if(savedActivities){
-    try{ACTIVITIES=JSON.parse(savedActivities);}
-    catch(e){ACTIVITIES=[...ACTIVITIES_DEFAULT];}
-  }
-  const savedActivityColors=localStorage.getItem('ft-activity-colors');
-  if(savedActivityColors){
-    try{Object.assign(ACT_COLORS_HEX,JSON.parse(savedActivityColors));}catch(e){}
-  }
+  const savedAct=localStorage.getItem('ft-activities');
+  if(savedAct){try{ACTIVITIES=JSON.parse(savedAct);}catch(e){}}
+  const savedActCol=localStorage.getItem('ft-activity-colors');
+  if(savedActCol){try{Object.assign(ACT_COLORS_HEX,JSON.parse(savedActCol));}catch(e){}}
   ACTIVITIES.forEach(a=>ensureActivityStyle(a,ACT_COLORS_HEX[a]||'#888'));
-
+  const savedTitle=localStorage.getItem('ft-title');
+  appTitle=savedTitle||DEFAULT_TITLE;
+  const hist=localStorage.getItem('ft-history');
+  planningHistory=hist?JSON.parse(hist):{};
   const sp=localStorage.getItem('ft-presence');
   if(sp){
     presence=JSON.parse(sp);
@@ -621,18 +837,16 @@ function initState(){
       else if(!presence[a]||typeof presence[a]!=='object'){presence[a]={};DAYS.forEach(d=>presence[a][d]=true);}
       else{DAYS.forEach(d=>{if(presence[a][d]===undefined)presence[a][d]=true;});}
     });
-  } else {
-    presence={};
-    AGENTS.forEach(a=>{presence[a]={};DAYS.forEach(d=>presence[a][d]=true);});
+  } else { _initPresence(); }
+  const key=getWeekKey(currentWeekOffset);
+  if(planningHistory[key]){
+    const w=planningHistory[key];
+    planningData=w.planningData||{};plageData=w.plageData||{};
+    agentNotes=w.agentNotes||{};ferieData=w.ferieData||{};locked=!!w.locked;
   }
-
-  const sw=localStorage.getItem('ft-week');
-  currentWeekOffset=sw?parseInt(sw):0;
-  const hist=localStorage.getItem('ft-history');
-  planningHistory=hist?JSON.parse(hist):{};
-  const savedTitle=localStorage.getItem('ft-title');
-  appTitle=savedTitle||DEFAULT_TITLE;
-  loadWeekData(currentWeekOffset);
+}
+function _initPresence(){
+  presence={};AGENTS.forEach(a=>{presence[a]={};DAYS.forEach(d=>presence[a][d]=true);});
 }
 
 function loadWeekData(offset){
@@ -650,40 +864,10 @@ function loadWeekData(offset){
   }
 }
 
-function saveWeekData(){
-  const key=getWeekKey(currentWeekOffset);
-  planningHistory[key]={
-    planningData:JSON.parse(JSON.stringify(planningData)),
-    plageData:JSON.parse(JSON.stringify(plageData)),
-    agentNotes:JSON.parse(JSON.stringify(agentNotes)),
-    ferieData:JSON.parse(JSON.stringify(ferieData)),
-    locked,
-    presence:JSON.parse(JSON.stringify(presence)),
-    savedAt:new Date().toISOString(),
-    weekLabel:formatWeekDisplay(currentWeekOffset)
-  };
-  localStorage.setItem('ft-history',JSON.stringify(planningHistory));
-  localStorage.setItem('ft-presence',JSON.stringify(presence));
-  localStorage.setItem('ft-week',String(currentWeekOffset));
-  localStorage.setItem('ft-team',JSON.stringify({agents:AGENTS,colors:AGENT_COLORS}));
-  localStorage.setItem('ft-rules',JSON.stringify(fixedRules));
-  localStorage.setItem('ft-activities',JSON.stringify(ACTIVITIES));
-  localStorage.setItem('ft-activity-colors',JSON.stringify(ACT_COLORS_HEX));
-  localStorage.setItem('ft-title',appTitle);
-  updateHistorySelect();
-}
+function saveWeekData(){ fbSaveWeek(); }
 
 function updateHistorySelect(){
-  const sel=document.getElementById('historySelect');
-  const keys=Object.keys(planningHistory).sort().reverse();
-  let html='<option value="">📂 Historique…</option>';
-  keys.forEach(k=>{
-    const w=planningHistory[k];
-    const label=w.weekLabel||k;
-    const d=w.savedAt?new Date(w.savedAt).toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'}):'';
-    html+=`<option value="${k}">${label}${d?' · '+d:''}</option>`;
-  });
-  sel.innerHTML=html;
+  // dropdown supprimé — remplacé par la modal Historique
 }
 
 // ============================================================
@@ -727,27 +911,61 @@ function getWeekNumber(d){
   const ys=new Date(Date.UTC(date.getUTCFullYear(),0,1));
   return Math.ceil((((date-ys)/86400000)+1)/7);
 }
-function changeWeek(dir){saveWeekData();currentWeekOffset+=dir;loadWeekData(currentWeekOffset);updateWeekDisplay();updateLockUI();renderAll();}
-function goToCurrentWeek(){saveWeekData();currentWeekOffset=0;loadWeekData(0);updateWeekDisplay();updateLockUI();renderAll();}
+function changeWeek(dir){
+  saveWeekData();
+  currentWeekOffset+=dir;
+  planningData={};plageData={};agentNotes={};ferieData={};locked=false;
+  const key=getWeekKey(currentWeekOffset);
+  if(planningHistory[key]){
+    const w=planningHistory[key];
+    planningData=w.planningData||{};plageData=w.plageData||{};
+    agentNotes=w.agentNotes||{};ferieData=w.ferieData||{};locked=!!w.locked;
+    if(w.presence){presence=w.presence;AGENTS.forEach(a=>{if(!presence[a]){presence[a]={};DAYS.forEach(d=>presence[a][d]=true);}});}
+  }
+  applyPlannedAbsencesForCurrentWeek();
+  updateWeekDisplay();updateLockUI();renderAll();
+  listenToCurrentWeek();
+}
+function goToCurrentWeek(){
+  saveWeekData();
+  currentWeekOffset=0;
+  planningData={};plageData={};agentNotes={};ferieData={};locked=false;
+  const key=getWeekKey(0);
+  if(planningHistory[key]){
+    const w=planningHistory[key];
+    planningData=w.planningData||{};plageData=w.plageData||{};
+    agentNotes=w.agentNotes||{};ferieData=w.ferieData||{};locked=!!w.locked;
+    if(w.presence){presence=w.presence;AGENTS.forEach(a=>{if(!presence[a]){presence[a]={};DAYS.forEach(d=>presence[a][d]=true);}});}
+  }
+  applyPlannedAbsencesForCurrentWeek();
+  updateWeekDisplay();updateLockUI();renderAll();
+  listenToCurrentWeek();
+}
 function updateWeekDisplay(){document.getElementById('weekDisplay').textContent=formatWeekDisplay(currentWeekOffset);}
 function loadFromHistory(key){
   if(!key)return;
-  if(planningHistory[key]){
-    const w=planningHistory[key];
-    planningData=w.planningData||{};plageData=w.plageData||{};agentNotes=w.agentNotes||{};ferieData=w.ferieData||{};
-    locked=!!w.locked;
-    if(w.presence){
-      presence=w.presence;
-      AGENTS.forEach(a=>{
-        if(typeof presence[a]==='boolean'){const v=presence[a];presence[a]={};DAYS.forEach(d=>presence[a][d]=v);}
-        else if(!presence[a]){presence[a]={};DAYS.forEach(d=>presence[a][d]=true);}
-      });
-      renderAgents();
-    }
-    updateLockUI();renderAll();
-    showToast('📂 Semaine chargée');
+  if(!planningHistory[key]){showToast('⚠ Semaine introuvable');return;}
+  saveWeekData();
+  const w=planningHistory[key];
+  planningData=w.planningData||{};
+  plageData=w.plageData||{};
+  agentNotes=w.agentNotes||{};
+  ferieData=w.ferieData||{};
+  locked=!!w.locked;
+  if(w.presence){
+    presence=w.presence;
+    AGENTS.forEach(a=>{
+      if(typeof presence[a]==='boolean'){const v=presence[a];presence[a]={};DAYS.forEach(d=>presence[a][d]=v);}
+      else if(!presence[a]){presence[a]={};DAYS.forEach(d=>presence[a][d]=true);}
+    });
   }
-  document.getElementById('historySelect').value='';
+  currentWeekOffset=weekKeyToOffset(key);
+  localStorage.setItem('ft-week',String(currentWeekOffset));
+  applyPlannedAbsencesForCurrentWeek();
+  updateWeekDisplay();updateLockUI();renderAgents();renderAll();
+  listenToCurrentWeek();
+  closeModal('modalHistory');
+  showToast('📂 Semaine '+(w.weekLabel||key)+' chargée');
 }
 
 // ============================================================
@@ -822,6 +1040,23 @@ function getManualSlotItems(day,slot,blocked){
 
 function generatePlanning(message='⚡ Planning généré'){
   if(locked){showToast('🔒 Planning verrouillé');return;}
+  pushUndo();
+  // Inject plage-type fixed rules into plageData
+  fixedRules.filter(r=>r.enabled&&r.type==='plage').forEach(rule=>{
+    const{day,slot}=rule;
+    if(!plageData[day])plageData[day]={};
+    if(!plageData[day][slot])plageData[day][slot]=[];
+    plageData[day][slot]=plageData[day][slot].filter(p=>p.fixedRuleId!==rule.id);
+    if(!isDayFerie(day)){
+      plageData[day][slot].push({
+        titre:rule.plageTitre||rule.desc||'Plage contrainte',
+        comment:rule.plageComment||'',
+        agent:'',
+        blockedAgents:rule.plageBlockedAgents||[],
+        fixedRuleId:rule.id
+      });
+    }
+  });
   cvmRotationIdx=0;
   const newPlan={};const dynCount={};
   AGENTS.forEach(a=>dynCount[a]=0);
@@ -843,7 +1078,7 @@ function generatePlanning(message='⚡ Planning généré'){
   const afterFerieDays=new Set();
   DAYS.forEach((d,i)=>{if(isDayFerie(d)&&i+1<DAYS.length)afterFerieDays.add(DAYS[i+1]);});
 
-  const enabledRules=fixedRules.filter(r=>r.enabled);
+  const enabledRules=fixedRules.filter(r=>r.enabled&&r.type!=='plage');
 
   DAYS.forEach(day=>{
     if(isDayFerie(day))return;
@@ -864,19 +1099,23 @@ function generatePlanning(message='⚡ Planning généré'){
           const sh=shuffle(targets);
           sh.slice(0,count).forEach(a=>{
             if(rule.nonBlocking){
-              newPlan[day][slot].push({agent:a,activity:rule.activity,fixed:false,note:'📅 Collab'});
+              newPlan[day][slot].push({agent:a,activity:rule.activity,fixed:false,note:'📅 Collab',fromRule:true});
             } else if(!newPlan[day][slot].find(x=>x.agent===a)){
-              newPlan[day][slot].push({agent:a,activity:rule.activity,fixed:false,note:''});
+              newPlan[day][slot].push({agent:a,activity:rule.activity,fixed:false,note:'',fromRule:true});
             }
           });
         });
         const assigned=new Set(newPlan[day][slot].map(x=>x.agent));
         const remaining=dayActive.filter(a=>!assigned.has(a));
+        let remIdx=0;
         remaining.forEach(agent=>{
           if(blocked.has(agent)){newPlan[day][slot].push({agent,activity:'Libre',fixed:false,note:'⚠ Plage contrainte'});return;}
-          const pool=['A&P','CVM','Permanence Visio','DYN / MER','Back Office','Corner Essentiel','Libre'];
-          let act='Libre';
-          for(const c of pool){if(c==='DYN / MER'&&dynCount[agent]>=1)continue;act=c;break;}
+          let act;
+          if(remIdx===0){act='A&P';}
+          else if(remIdx===1){act=dynCount[agent]<2?'DYN / MER':'Back Office';}
+          else if(remIdx<=3){act='Back Office';}
+          else{act='Libre';}
+          remIdx++;
           if(act==='DYN / MER')dynCount[agent]++;
           newPlan[day][slot].push({agent,activity:act,fixed:false,note:''});
         });
@@ -896,7 +1135,7 @@ function generatePlanning(message='⚡ Planning généré'){
           sh.filter(a=>!cvm2Set.has(a)).forEach((a,i)=>{
             const pool=['A&P','Back Office','Permanence Visio','Corner Essentiel','DYN / MER','Libre'];
             let act=pool[i%pool.length];
-            if(act==='DYN / MER'&&dynCount[a]>=1)act='Back Office';
+            if(act==='DYN / MER'&&dynCount[a]>=2)act='Back Office';
             if(act==='DYN / MER')dynCount[a]++;
             newPlan[day][slot].push({agent:a,activity:act,fixed:false,note:''});
           });
@@ -909,23 +1148,18 @@ function generatePlanning(message='⚡ Planning généré'){
       const assigned=new Set(newPlan[day][slot].map(x=>x.agent));
       const base=(avail.length>0?avail:dayActive).filter(a=>!assigned.has(a));
       const sh=shuffle(base);
-      let apDone=false,cvmDone=false,visioDone=false;
+      let apDone=false,cvmDone=false,dynDone=false,bo1Done=false;
       const slotItems=[...newPlan[day][slot]];
       sh.forEach(agent=>{
         let act;
         if(!apDone){act='A&P';apDone=true;}
         else if(!cvmDone){act='CVM';cvmDone=true;}
-        else if(!visioDone&&dayActive.length>=3){act='Permanence Visio';visioDone=true;}
-        else{
-          const pool=['DYN / MER','Back Office','Corner Essentiel','Collectif Visio','Collectif Physique','Libre','CVM'];
-          act='Libre';
-          for(const c of pool){
-            if(c==='DYN / MER'&&dynCount[agent]>=1)continue;
-            if(c==='Collectif Visio'&&slotItems.filter(x=>x.activity==='Collectif Visio').length>=2)continue;
-            if(c==='Collectif Physique'&&slotItems.filter(x=>x.activity==='Collectif Physique').length>=2)continue;
-            act=c;break;
-          }
+        else if(!dynDone){
+          act=(dynCount[agent]<2)?'DYN / MER':'Back Office';
+          dynDone=true;
         }
+        else if(!bo1Done){act='Back Office';bo1Done=true;}
+        else{act='Libre';}
         if(act==='DYN / MER')dynCount[agent]++;
         slotItems.push({agent,activity:act,fixed:false,note:''});
       });
@@ -934,9 +1168,67 @@ function generatePlanning(message='⚡ Planning généré'){
     });
   });
 
+  // ---- RÈGLE : PAS DE CVM MATIN + APRÈS-MIDI POUR LE MÊME AGENT ----
+  // Si un agent a CVM le matin et CVM l'après-midi (sans règle fixe ni manuel),
+  // on tente de swapper son après-midi avec un agent qui n'a pas CVM le matin.
+  DAYS.forEach(day=>{
+    if(isDayFerie(day))return;
+    if(!newPlan[day])return;
+    const mornItems=newPlan[day]['Matin']||[];
+    const aftItems=newPlan[day]['Après-midi']||[];
+    const mornCVMAgents=new Set(mornItems.filter(x=>x.activity==='CVM').map(x=>x.agent));
+    aftItems.forEach(item=>{
+      if(item.activity!=='CVM')return;
+      if(!mornCVMAgents.has(item.agent))return;
+      if(item.fromRule||item.manual)return; // règle fixe ou manuel → on respecte
+      // Cherche un agent en après-midi sans CVM matin, libre d'être swappé
+      const candidate=aftItems.find(other=>
+        other!==item&&
+        !mornCVMAgents.has(other.agent)&&
+        other.activity!=='CVM'&&
+        !other.fromRule&&
+        !other.manual&&
+        isAgentPresentOnDay(other.agent,day)
+      );
+      if(candidate){
+        // Swap : le candidat prend CVM, l'agent double-CVM prend l'autre activité
+        const tmp=candidate.activity;
+        candidate.activity='CVM';
+        item.activity=tmp;
+      }
+      // Sinon : pas le choix, on laisse le double CVM
+    });
+  });
+
+  // ---- GARANTIE MINIMUM 1 CVM PAR CRÉNEAU ----
+  // Si aucun CVM n'est présent sur un créneau, le premier agent libre
+  // (présent, non bloqué par plage, non affecté par règle fixe, non manuel)
+  // prend CVM — en préférant un agent qui n'a pas déjà CVM sur l'autre demi-journée.
+  DAYS.forEach(day=>{
+    if(isDayFerie(day))return;
+    SLOTS.forEach(slot=>{
+      const slotItems=newPlan[day][slot];
+      const blockedNow=getBlockedAgentsForSlot(day,slot);
+      const hasCVM=slotItems.some(x=>x.activity==='CVM'&&isAgentPresentOnDay(x.agent,day));
+      if(hasCVM)return;
+      const otherSlot=slot==='Matin'?'Après-midi':'Matin';
+      const otherCVMAgents=new Set(((newPlan[day]&&newPlan[day][otherSlot])||[]).filter(x=>x.activity==='CVM').map(x=>x.agent));
+      const eligible=slotItems.filter(x=>
+        isAgentPresentOnDay(x.agent,day)&&
+        !blockedNow.has(x.agent)&&
+        !x.manual&&
+        !x.fromRule
+      );
+      // Préférer un agent qui n'a pas CVM sur l'autre créneau
+      const target=eligible.find(x=>!otherCVMAgents.has(x.agent))||eligible[0];
+      if(target)target.activity='CVM';
+    });
+  });
+
   planningData=newPlan;
   saveWeekData();
   renderAll();
+  logChange('Planning généré');
   showToast(message);
 }
 
@@ -951,7 +1243,7 @@ function refreshPlanning(){
 // ============================================================
 // RENDER ALL
 // ============================================================
-function renderAll(){renderPlanning();updateDashboard();updateStatus();}
+function renderAll(){renderPlanning();updateDashboard();updateStatus();renderAgentRecap();}
 
 // ============================================================
 // PLAGE CONTRAINTE
@@ -1034,7 +1326,7 @@ function recomputeSlot(day, slot){
   toAssign.forEach(agent=>{
     let act='Libre';
     for(const c of pool){
-      if(c==='DYN / MER'&&dynCount[agent]>=1) continue;
+      if(c==='DYN / MER'&&dynCount[agent]>=2) continue;
       if(c==='Collectif Visio'&&newAssignments.filter(x=>x.activity==='Collectif Visio').length>=2) continue;
       if(c==='Collectif Physique'&&newAssignments.filter(x=>x.activity==='Collectif Physique').length>=2) continue;
       act=c; break;
@@ -1059,8 +1351,9 @@ function savePlage(){
   const titre=document.getElementById('plageTitre').value.trim();
   const comment=document.getElementById('plageComment').value.trim();
   const blockedAgents=getCheckedBlockedAgents('plageAgentsList');
-  if(!titre){showToast('⚠ Titre requis');
-  checkPizzaEgg(titre);return;}
+  if(!titre){showToast('⚠ Titre requis');return;}
+  pushUndo();
+  checkPizzaEgg(titre);
   if(!plageData[day])plageData[day]={};
   if(!plageData[day][slot])plageData[day][slot]=[];
   plageData[day][slot].push({titre,comment,agent:'',blockedAgents});
@@ -1069,15 +1362,18 @@ function savePlage(){
   closeModal('modalPlage');
   saveWeekData();
   renderAll();
+  logChange(`Plage ajoutée: "${titre}" (${day} ${slot})`);
   showToast('🚧 Plage contrainte ajoutée' + (blockedAgents.length>0 ? ' — planning recalculé' : ''));
 }
 
 function deletePlage(day,slot,idx){
   if(locked){showToast('🔒 Planning verrouillé');return;}
+  pushUndo();
   const hadBlocked=(plageData[day][slot][idx].blockedAgents||[]).length>0;
   plageData[day][slot].splice(idx,1);
   if(hadBlocked) recomputeSlot(day, slot);
   saveWeekData();renderAll();
+  logChange(`Plage supprimée (${day} ${slot})`);
   showToast('🗑 Plage supprimée' + (hadBlocked ? ' — planning recalculé' : ''));
 }
 
@@ -1193,7 +1489,8 @@ function renderPlanning(){
           const hasNote=note.length>0;
           const isPlageBlocked=note.includes('Plage contrainte');
           const draggable=!locked?'':'data-nodrag="1"';
-          html+=`<div class="activity-card ${actClass}" data-day="${day}" data-slot="${slot}" data-idx="${idx2}" ${draggable}>
+          const isDimmed=spotlightAgent&&spotlightAgent!==item.agent;
+          html+=`<div class="activity-card ${actClass}${isDimmed?' card-dimmed':''}" style="border-left:3px solid ${agentColor}" data-day="${day}" data-slot="${slot}" data-idx="${idx2}" ${draggable}>
             <div class="card-left">
               <div class="card-agent-dot" style="background:${agentColor}">${initials}</div>
               <div>
@@ -1242,6 +1539,86 @@ function renderPlanning(){
   updateDashboard();updateStatus();
 }
 
+// ============================================================
+// CLONE-DRAG (Ctrl/Cmd + mousedown sur un bloc)
+// ============================================================
+let _cloneGhost=null,_clonePayload=null;
+
+function initCloneDrag(){
+  // Phase de capture pour intercepter AVANT SortableJS
+  document.addEventListener('mousedown',function(e){
+    if(!(e.ctrlKey||e.metaKey))return;
+    if(locked)return;
+    const card=e.target.closest('.activity-card');
+    if(!card)return;
+    const day=card.dataset.day,slot=card.dataset.slot;
+    const idx=parseInt(card.dataset.idx);
+    if(!day||!slot||isNaN(idx))return;
+    const item=planningData[day]&&planningData[day][slot]&&planningData[day][slot][idx];
+    if(!item)return;
+
+    e.preventDefault();
+    e.stopImmediatePropagation();
+
+    _clonePayload={agent:item.agent,activity:item.activity,note:item.note||''};
+    const agentColor=AGENT_COLORS[item.agent]||'#888';
+    const actClass=ACT_CLASS[item.activity]||'act-libre';
+    const initials=item.agent.substring(0,2).toUpperCase();
+
+    _cloneGhost=document.createElement('div');
+    _cloneGhost.className=`activity-card ${actClass}`;
+    _cloneGhost.style.cssText=`position:fixed;pointer-events:none;z-index:9999;opacity:.92;transform:rotate(4deg) scale(1.1);box-shadow:0 10px 28px rgba(0,0,0,.35);border-left:3px solid ${agentColor};min-width:130px;transition:none;`;
+    _cloneGhost.innerHTML=`<div class="card-left"><div class="card-agent-dot" style="background:${agentColor}">${initials}</div><div><div class="card-act">${item.activity}</div><div class="card-agent">${item.agent}</div></div></div><div style="font-size:.6rem;opacity:.7;margin-left:4px;">📋</div>`;
+    document.body.appendChild(_cloneGhost);
+    _moveCloneGhost(e);
+
+    document.addEventListener('mousemove',_moveCloneGhost);
+    document.addEventListener('mouseup',_dropClone,{once:true});
+  },true);
+
+  // Curseur "copie" quand Ctrl/Cmd maintenu sur un bloc
+  document.addEventListener('keydown',function(e){
+    if(e.ctrlKey||e.metaKey)document.body.classList.add('clone-mode');
+  });
+  document.addEventListener('keyup',function(e){
+    if(!e.ctrlKey&&!e.metaKey)document.body.classList.remove('clone-mode');
+  });
+}
+
+function _moveCloneGhost(e){
+  if(!_cloneGhost)return;
+  _cloneGhost.style.left=(e.clientX+16)+'px';
+  _cloneGhost.style.top=(e.clientY-22)+'px';
+  // Highlight slot sous le curseur
+  document.querySelectorAll('.clone-drop-target').forEach(el=>el.classList.remove('clone-drop-target'));
+  const under=document.elementFromPoint(e.clientX,e.clientY);
+  const slotEl=under&&under.closest('.slot-container[data-day][data-slot]');
+  if(slotEl)slotEl.classList.add('clone-drop-target');
+}
+
+function _dropClone(e){
+  document.removeEventListener('mousemove',_moveCloneGhost);
+  if(_cloneGhost){_cloneGhost.remove();_cloneGhost=null;}
+  document.body.classList.remove('clone-mode');
+  document.querySelectorAll('.clone-drop-target').forEach(el=>el.classList.remove('clone-drop-target'));
+  if(!_clonePayload)return;
+  const payload=_clonePayload;_clonePayload=null;
+
+  const el=document.elementFromPoint(e.clientX,e.clientY);
+  const slotEl=el&&el.closest('.slot-container[data-day][data-slot]');
+  if(!slotEl){showToast('⚠ Déposez sur un créneau du planning');return;}
+  const day=slotEl.dataset.day,slot=slotEl.dataset.slot;
+  if(!day||!slot)return;
+
+  pushUndo();
+  if(!planningData[day])planningData[day]={};
+  if(!planningData[day][slot])planningData[day][slot]=[];
+  planningData[day][slot].push({agent:payload.agent,activity:payload.activity,fixed:false,note:'',manual:true});
+  saveWeekData();renderAll();
+  logChange(`Bloc dupliqué: ${payload.agent} → ${payload.activity} (${day} ${slot})`);
+  showToast(`📋 ${payload.agent} · ${payload.activity} dupliqué`);
+}
+
 function initSortable(){
   DAYS.forEach(day=>SLOTS.forEach(slot=>{
     const el=document.getElementById(`slot-${day}-${slot}`);
@@ -1256,6 +1633,7 @@ function initSortable(){
 }
 
 function handleDragEnd(evt){
+  pushUndo();
   const fromDay=evt.from.dataset.day;const fromSlot=evt.from.dataset.slot;
   const toDay=evt.to.dataset.day;const toSlot=evt.to.dataset.slot;
   if(!fromDay||!toDay){renderPlanning();return;}
@@ -1274,6 +1652,7 @@ function handleDragEnd(evt){
   if(evt.newIndex>=movableTo.length){toArr.push(movingItem);}
   else{const after=movableTo[evt.newIndex];const ri=toArr.indexOf(after);toArr.splice(ri,0,movingItem);}
   saveWeekData();renderPlanning();
+  logChange(`Déplacement: ${movingItem.agent} ${movingItem.activity} → ${toDay} ${toSlot}`);
   showToast(`🔄 ${movingItem.agent} → ${toDay} ${toSlot}`);
 }
 
@@ -1295,6 +1674,7 @@ function openEditBlockModal(day,slot,idx){
   document.getElementById('modalEditBlock').style.display='flex';
 }
 function saveEditBlock(){
+  pushUndo();
   const day=document.getElementById('editBlockDay').value;
   const slot=document.getElementById('editBlockSlot').value;
   const idx=parseInt(document.getElementById('editBlockIdx').value);
@@ -1304,6 +1684,7 @@ function saveEditBlock(){
   planningData[day][slot][idx]={...planningData[day][slot][idx],agent,activity,fixed:false,manual:true};
   closeModal('modalEditBlock');
   saveWeekData();renderAll();
+  logChange(`Bloc modifié: ${agent} → ${activity} (${day} ${slot})`);
   showToast(`✏️ Bloc modifié`);
 }
 function openAddBlockModal(day,slot){
@@ -1315,6 +1696,7 @@ function openAddBlockModal(day,slot){
   document.getElementById('modalAddBlock').style.display='flex';
 }
 function saveBlock(){
+  pushUndo();
   const day=document.getElementById('blockDay').value;
   const slot=document.getElementById('blockSlot').value;
   const agent=document.getElementById('blockAgent').value;
@@ -1324,20 +1706,40 @@ function saveBlock(){
   planningData[day][slot].push({agent,activity,fixed:false,note:'',manual:true});
   closeModal('modalAddBlock');
   saveWeekData();renderAll();
+  logChange(`Bloc ajouté: ${agent} → ${activity} (${day} ${slot})`);
   showToast(`➕ ${agent} · ${activity} ajouté`);
 }
 function deleteBlock(day,slot,idx){
   if(locked){showToast('🔒 Planning verrouillé');return;}
+  pushUndo();
   const arr=planningData[day]&&planningData[day][slot];
   if(!arr)return;
+  const deleted=arr[idx];
   arr.splice(idx,1);
   saveWeekData();renderAll();
+  logChange(`Bloc supprimé: ${deleted?deleted.agent+' '+deleted.activity:''} (${day} ${slot})`);
   showToast('🗑 Bloc supprimé');
 }
 
 // ============================================================
 // AGENTS
 // ============================================================
+function getAgentEquityWarning(agent){
+  // Check last 8 weeks for equity
+  const keys=Object.keys(planningHistory).sort().reverse().slice(0,8);
+  const counts={};let total=0;
+  keys.forEach(key=>{
+    const w=planningHistory[key];if(!w||!w.planningData)return;
+    DAYS.forEach(d=>SLOTS.forEach(s=>{
+      const arr=(w.planningData[d]&&w.planningData[d][s])||[];
+      arr.forEach(item=>{if(item.agent===agent&&item.activity){counts[item.activity]=(counts[item.activity]||0)+1;total++;}});
+    }));
+  });
+  if(total===0)return false;
+  const topCount=Math.max(...Object.values(counts));
+  return(topCount/total)>=0.45;
+}
+
 function renderAgents(){
   const container=document.getElementById('agentList');
   const dynCounts=getDynCounts();
@@ -1354,7 +1756,7 @@ function renderAgents(){
     const wcPct=Math.round((wcv/maxSlots)*100);
     const wcColor=wcPct>=80?'#e8445a':wcPct>=50?'#f5a623':'#38c8a8';
     const dynClass=dc===0?'dyn-ok':dc===1?'dyn-warn':'dyn-over';
-    const dynText=dc===0?'DYN: 0/1':dc===1?'DYN: 1/1 ✓':'DYN: '+dc+'/1 ⚠';
+    const dynText=dc===0?'DYN: 0/2':dc===1?'DYN: 1/2':dc===2?'DYN: 2/2 ✓':'DYN: '+dc+'/2 ⚠';
     const daysPresent=DAYS.filter(function(d){return isAgentPresentOnDay(agent,d);}).length;
 
     // Build day grid separately to avoid nested backtick issues
@@ -1372,13 +1774,15 @@ function renderAgents(){
       daysHtml+='</div>';
     });
 
-    html+='<div class="agent-item-wrap'+(fullyAbsent?' agent-fully-absent':'')+'">';
-    html+='<div class="agent-item-top" onclick="toggleAgentAllDays(\''+agent+'\');">';
+    const spotClass=spotlightAgent===agent?' spotlight-active':spotlightAgent?' spotlight-dim':'';
+    html+='<div class="agent-item-wrap'+(fullyAbsent?' agent-fully-absent':'')+spotClass+'" style="cursor:pointer;">';
+    html+='<div class="agent-item-top" onclick="toggleAgentAllDays(\''+agent+'\')" ondblclick="event.stopPropagation();setSpotlight(\''+agent+'\')" title="Double-clic pour mettre en avant cet agent">';
     html+='<div class="agent-avatar" style="background:'+color+'">'+initials+'</div>';
     html+='<div class="agent-info" style="flex:1;min-width:0;">';
     html+='<div style="display:flex;align-items:center;gap:4px;">';
     html+='<span class="agent-name">'+agent+'</span>';
     if(partial) html+='<span class="agent-partial-badge">'+daysPresent+'j/5</span>';
+    if(getAgentEquityWarning(agent)) html+='<span class="equity-sidebar-warn" title="Activité dominante ≥ 45% sur les 8 dernières semaines">⚠</span>';
     html+='</div>';
     if(!fullyAbsent){
       html+='<span class="agent-dyn-badge '+dynClass+'">'+dynText+'</span>';
@@ -1387,6 +1791,7 @@ function renderAgents(){
     }
     html+='</div>';
     html+='<input type="checkbox" class="agent-check"'+((!fullyAbsent)?' checked':'')+' onclick="event.stopPropagation();toggleAgentAllDays(\''+agent+'\')"/>';
+    html+='<button onclick="event.stopPropagation();setSpotlight(\''+agent+'\')" title="Mettre en avant" style="width:18px;height:18px;border-radius:4px;border:none;background:'+(spotlightAgent===agent?'var(--accent)':'rgba(0,0,0,.07)')+';color:'+(spotlightAgent===agent?'#fff':'var(--text2)')+';cursor:pointer;font-size:0.65rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s;padding:0;">👁</button>';
     html+='</div>'; // close agent-item-top
     if(!fullyAbsent){
       html+='<div class="agent-days-grid">'+daysHtml+'</div>';
@@ -1421,6 +1826,10 @@ function toggleAllAgents(){
   AGENTS.forEach(a=>{if(!presence[a])presence[a]={};DAYS.forEach(d=>presence[a][d]=!allOn);});
   saveWeekData();renderAgents();renderPlanning();
 }
+function setSpotlight(agent){
+  spotlightAgent=(spotlightAgent===agent)?null:agent;
+  renderAgents();renderPlanning();renderAgentRecap();
+}
 
 // ============================================================
 // DASHBOARD & STATUS
@@ -1449,7 +1858,7 @@ function updateDashboard(){
 function updateStatus(){
   const active=getActiveAgents();const errors=[];
   if(!active.length){errors.push('Aucun agent présent cette semaine');renderStatus(errors);return;}
-  fixedRules.filter(r=>r.enabled).forEach(rule=>{
+  fixedRules.filter(r=>r.enabled&&r.type!=='plage').forEach(rule=>{
     if(isDayFerie(rule.day))return;
     const dayActive=AGENTS.filter(a=>isAgentPresentOnDay(a,rule.day));
     const arr=(planningData[rule.day]&&planningData[rule.day][rule.slot])||[];
@@ -1457,9 +1866,6 @@ function updateStatus(){
     const minReq=rule.minAgents>0?rule.minAgents:(rule.agents&&rule.agents.length?rule.agents.filter(a=>isAgentPresentOnDay(a,rule.day)).length:dayActive.length);
     if(count<minReq)errors.push(rule.desc||rule.activity+' incomplet – '+rule.day+' '+rule.slot);
   });
-  const dynC={};AGENTS.forEach(a=>dynC[a]=0);
-  DAYS.forEach(d=>SLOTS.forEach(s=>{const arr=(planningData[d]&&planningData[d][s])||[];arr.forEach(x=>{if(x.activity==='DYN / MER'&&isAgentPresentOnDay(x.agent,d))dynC[x.agent]++;});}));
-  Object.entries(dynC).forEach(([a,c])=>{if(!isAgentFullyAbsent(a)&&c>1)errors.push(`${a} a DYN/MER ${c}x (max 1/semaine)`);});
   let hasAP=false,hasCVM=false,hasVisio=false;
   DAYS.forEach(d=>SLOTS.forEach(s=>{const arr=(planningData[d]&&planningData[d][s])||[];arr.forEach(x=>{if(!isAgentPresentOnDay(x.agent,d))return;if(x.activity==='A&P')hasAP=true;if(x.activity==='CVM')hasCVM=true;if(x.activity==='Permanence Visio')hasVisio=true;});}));
   if(!hasAP&&active.length>=2)errors.push('Aucun agent en A&P cette semaine');
@@ -1503,43 +1909,56 @@ function openHistoryModal(){
 function renderHistoryList(){
   const c=document.getElementById('historyList');
   const keys=Object.keys(planningHistory).sort().reverse();
-  if(keys.length===0){c.innerHTML='<div style="font-size:0.8rem;color:var(--text2);padding:10px;">Aucun historique.</div>';return;}
+  if(keys.length===0){c.innerHTML='<div style="font-size:0.8rem;color:var(--text2);padding:10px;">Aucune semaine sauvegardée.</div>';return;}
+  const curKey=getWeekKey(currentWeekOffset);
   let html='';
   keys.forEach(k=>{
     const w=planningHistory[k];
     const label=w.weekLabel||k;
-    const d=w.savedAt?new Date(w.savedAt).toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'';
-    html+=`<div class="history-entry">
-      <input type="checkbox" class="history-entry-check" data-key="${k}"/>
-      <span class="history-entry-week" onclick="loadFromHistory('${k}');closeModal('modalHistory')">${label}</span>
-      <span class="history-entry-date">${d}</span>
-      <button class="history-del" onclick="deleteSingleHistory('${k}')" title="Supprimer">🗑</button>
+    const isCur=k===curKey;
+    const d=w.savedAt?new Date(w.savedAt).toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'}):'';
+    const hasData=w.planningData&&Object.keys(w.planningData).length>0;
+    html+=`<div class="history-entry" style="cursor:pointer;${isCur?'background:rgba(100,120,255,.1);border-left:3px solid var(--accent);':''}" onclick="loadFromHistory('${k}')" title="Charger cette semaine">
+      <input type="checkbox" class="history-entry-check" data-key="${k}" onclick="event.stopPropagation()"/>
+      <span class="history-entry-week" style="flex:1;pointer-events:none;">
+        ${isCur?'📍 ':'📅 '}<strong>${label}</strong>
+        ${isCur?'<span style="font-size:.65rem;color:var(--accent);margin-left:6px;">semaine actuelle</span>':''}
+        ${!hasData?'<span style="font-size:.65rem;color:#886644;margin-left:4px;">(vide)</span>':''}
+      </span>
+      <span class="history-entry-date" style="font-size:.65rem;color:var(--text2);white-space:nowrap;pointer-events:none;">${d}</span>
+      <button class="history-del" onclick="event.stopPropagation();deleteSingleHistory('${k}')" title="Supprimer cette semaine">🗑</button>
     </div>`;
   });
+  html+=`<div style="font-size:.67rem;color:var(--text2);padding:8px 4px;border-top:1px solid var(--border);margin-top:6px;">💡 Cliquer sur une semaine la charge directement dans le planning.</div>`;
   c.innerHTML=html;
 }
 function selectAllHistory(val){
   document.querySelectorAll('.history-entry-check').forEach(cb=>cb.checked=val);
 }
-function deleteSelectedHistory(){
+async function deleteSelectedHistory(){
   const keys=[];
   document.querySelectorAll('.history-entry-check:checked').forEach(cb=>keys.push(cb.getAttribute('data-key')));
   if(keys.length===0){showToast('⚠ Aucune semaine sélectionnée');return;}
-  keys.forEach(k=>delete planningHistory[k]);
-  localStorage.setItem('ft-history',JSON.stringify(planningHistory));
+  for(const k of keys){
+    delete planningHistory[k];
+    if(db){try{await db.ref('planning/weeks/'+k).remove();}catch(e){}}
+  }
+  if(!db)localStorage.setItem('ft-history',JSON.stringify(planningHistory));
   updateHistorySelect();renderHistoryList();
-  showToast(`🗑 ${keys.length} semaine${keys.length>1?'s':''} supprimée${keys.length>1?'s':''}`);
+  showToast('🗑 '+keys.length+' semaine'+(keys.length>1?'s':'')+' supprimée'+(keys.length>1?'s':''));
 }
-function deleteSingleHistory(key){
+async function deleteSingleHistory(key){
   delete planningHistory[key];
-  localStorage.setItem('ft-history',JSON.stringify(planningHistory));
+  if(db){try{await db.ref('planning/weeks/'+key).remove();}catch(e){}}
+  else{localStorage.setItem('ft-history',JSON.stringify(planningHistory));}
   updateHistorySelect();renderHistoryList();
   showToast('🗑 Semaine supprimée');
 }
-function deleteAllHistory(){
-  if(!confirm('Supprimer tout l\'historique ? Cette action est irréversible.'))return;
+async function deleteAllHistory(){
+  if(!confirm("Supprimer tout l'historique ? Cette action est irréversible."))return;
   planningHistory={};
-  localStorage.setItem('ft-history',JSON.stringify(planningHistory));
+  if(db){try{await db.ref('planning/weeks').remove();}catch(e){}}
+  else{localStorage.setItem('ft-history',JSON.stringify(planningHistory));}
   updateHistorySelect();renderHistoryList();
   showToast('🗑 Historique vidé');
 }
@@ -1608,66 +2027,145 @@ function saveTeam(){
   names.forEach(n=>checkMarioEgg(n));
   closeModal('modalTeam');
   saveWeekData();renderAgents();renderPlanning();updateDashboard();updateStatus();
+  logChange(`Équipe mise à jour: ${names.join(', ')}`);
   showToast('👥 Équipe mise à jour');
 }
 
 // ============================================================
 // PDF EXPORT
 // ============================================================
-function exportPDF(){
+const PDF_BG={'A&P':'#e8f0ff','DYN / MER':'#fff3e0','CVM':'#fce8ff','Dossier transversal':'#e8faf4','Corner Essentiel':'#fff8e1','Permanence Visio':'#e8f4ff','Back Office':'#f0f0ff',"Segmentation travail d'équipe":'#e8fff4','Collectif Visio':'#fff0f8','Collectif Physique':'#fff8f0','Libre':'#f8f8f8'};
+
+function buildPdfPageHtml(agentFilter){
   const active=getActiveAgents();
   const weekStr=formatWeekDisplay(currentWeekOffset);
   const monday=getMonday(currentWeekOffset);
-  let html=`<html><head><style>
-    body{font-family:Arial,sans-serif;font-size:10px;color:#1a1d2e;}
-    h1{font-size:14px;margin-bottom:3px;}
-    .sub{color:#666;font-size:9px;margin-bottom:12px;}
-    table{border-collapse:collapse;width:100%;margin-top:12px;}
-    th{background:#5a67f2;color:#fff;padding:5px 3px;font-size:8px;text-transform:uppercase;}
-    th.ferie-th{background:#f0a020;}
-    td{border:1px solid #dde;padding:3px;vertical-align:top;min-height:40px;}
-    .slot-td{background:#f0f0f8;font-weight:bold;color:#666;font-size:8px;text-align:center;writing-mode:vertical-lr;transform:rotate(180deg);width:18px;}
-    .card{border-radius:3px;padding:2px 4px;margin-bottom:2px;font-size:8px;}
-    .plage-pdf{border-radius:3px;padding:2px 4px;margin-bottom:2px;font-size:7px;background:#fff3e0;border:1px dashed #ff9f43;color:#b06010;}
-    .ferie-pdf{background:#fff8f0;text-align:center;font-size:9px;color:#b85c00;padding:10px;}
-    .footer{margin-top:12px;color:#aaa;font-size:8px;text-align:right;}
-  </style></head><body>
-    <h1>${appTitle}</h1>
-    <div class="sub">${weekStr} | Présents: ${active.join(', ')}${AGENTS.filter(a=>isAgentPartial(a)).map(a=>{const abs=DAYS.filter(d=>!isAgentPresentOnDay(a,d));return ` | ${a} absent: ${abs.join(', ')}`;}).join('')}${Object.values(ferieData).some(Boolean)?' | Fériés: '+DAYS.filter(d=>isDayFerie(d)).join(', '):''}</div>
-    <table><thead><tr><th></th>`;
+  const agentColor=agentFilter?AGENT_COLORS[agentFilter]||'#5a67f2':'#5a67f2';
+  const headerBg=agentFilter?agentColor:'#5a67f2';
+  let html=`<h1 style="font-size:13px;margin-bottom:2px;">${appTitle}${agentFilter?' — '+agentFilter:''}</h1>`;
+  html+=`<div style="color:#666;font-size:8px;margin-bottom:10px;">${weekStr}`;
+  if(agentFilter){
+    const absDays=DAYS.filter(d=>!isAgentPresentOnDay(agentFilter,d));
+    html+=absDays.length?' | Absent: '+absDays.join(', '):'';
+  } else {
+    html+=` | Présents: ${active.join(', ')}`;
+    html+=AGENTS.filter(a=>isAgentPartial(a)).map(a=>{const abs=DAYS.filter(d=>!isAgentPresentOnDay(a,d));return ` | ${a} absent: ${abs.join(', ')}`;}).join('');
+    html+=Object.values(ferieData).some(Boolean)?' | Fériés: '+DAYS.filter(d=>isDayFerie(d)).join(', '):'';
+  }
+  html+=`</div><table style="border-collapse:collapse;width:100%;"><thead><tr><th style="background:#888;color:#fff;padding:4px 3px;font-size:7px;width:18px;"></th>`;
   DAYS.forEach((day,i)=>{
     const d=new Date(monday);d.setDate(monday.getDate()+i);
     const ds=d.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'});
-    html+=`<th class="${isDayFerie(day)?'ferie-th':''}">${day}${isDayFerie(day)?' 🏖':''}<br>${ds}</th>`;
+    html+=`<th style="background:${isDayFerie(day)?'#f0a020':headerBg};color:#fff;padding:5px 3px;font-size:8px;text-transform:uppercase;">${day}${isDayFerie(day)?' 🏖':''}<br>${ds}</th>`;
   });
   html+=`</tr></thead><tbody>`;
   SLOTS.forEach(slot=>{
-    html+=`<tr><td class="slot-td">${slot}</td>`;
+    html+=`<tr><td style="background:#f0f0f8;font-weight:bold;color:#666;font-size:7px;text-align:center;writing-mode:vertical-lr;transform:rotate(180deg);width:18px;border:1px solid #dde;padding:3px;">${slot}</td>`;
     DAYS.forEach(day=>{
-      html+=`<td>`;
-      if(isDayFerie(day)){html+=`<div class="ferie-pdf">🏖 Férié</div>`;html+=`</td>`;return;}
-      const arr=(planningData[day]&&planningData[day][slot])||[];
-      const plages=(plageData[day]&&plageData[day][slot])||[];
-      const bg={'A&P':'#e8f0ff','DYN / MER':'#fff3e0','CVM':'#fce8ff','Dossier transversal':'#e8faf4','Corner Essentiel':'#fff8e1','Permanence Visio':'#e8f4ff','Back Office':'#f0f0ff',"Segmentation travail d'équipe":'#e8fff4','Collectif Visio':'#fff0f8','Collectif Physique':'#fff8f0','Libre':'#f8f8f8'};
-      arr.filter(x=>isAgentPresentOnDay(x.agent,day)).forEach(item=>{
-        const note=item.note||(agentNotes[item.agent]&&agentNotes[item.agent][day])||'';
-        html+=`<div class="card" style="background:${bg[item.activity]||'#f8f8f8'}">${item.agent} – ${item.activity}${note?` <i>(${note})</i>`:''}</div>`;
-      });
-      plages.forEach(p=>{
-        const bCount=(p.blockedAgents&&p.blockedAgents.length)||0;
-        html+=`<div class="plage-pdf">🚧 ${p.titre}${p.comment?' – '+p.comment:''}${bCount>0?' | bloqués: '+p.blockedAgents.join(', '):''}</div>`;
-      });
+      html+=`<td style="border:1px solid #dde;padding:3px;vertical-align:top;min-height:${agentFilter?'50px':'36px'};">`;
+      if(isDayFerie(day)){html+=`<div style="background:#fff8f0;text-align:center;font-size:8px;color:#b85c00;padding:8px;">🏖 Férié</div>`;}
+      else {
+        const arr=(planningData[day]&&planningData[day][slot])||[];
+        const plages=(plageData[day]&&plageData[day][slot])||[];
+        const filtered=arr.filter(x=>isAgentPresentOnDay(x.agent,day)&&(!agentFilter||x.agent===agentFilter));
+        if(agentFilter&&filtered.length===0){
+          const isAbsent=!isAgentPresentOnDay(agentFilter,day);
+          html+=`<div style="color:#aaa;font-size:7px;font-style:italic;padding:4px;">${isAbsent?'Absent':'—'}</div>`;
+        }
+        filtered.forEach(item=>{
+          const note=item.note||(agentNotes[item.agent]&&agentNotes[item.agent][day])||'';
+          const col=AGENT_COLORS[item.agent]||'#888';
+          html+=`<div style="border-radius:3px;padding:2px 4px;margin-bottom:2px;font-size:${agentFilter?'9px':'8px'};background:${PDF_BG[item.activity]||'#f8f8f8'};border-left:3px solid ${col};">`;
+          if(!agentFilter)html+=`<strong>${item.agent}</strong> – `;
+          html+=`${item.activity}${note?` <i style="color:#666;">(${note})</i>`:''}</div>`;
+        });
+        if(!agentFilter){
+          plages.forEach(p=>{
+            const bCount=(p.blockedAgents&&p.blockedAgents.length)||0;
+            html+=`<div style="border-radius:3px;padding:2px 4px;margin-bottom:2px;font-size:7px;background:#fff3e0;border:1px dashed #ff9f43;color:#b06010;">🚧 ${p.titre}${p.comment?' – '+p.comment:''}${bCount>0?' | bloqués: '+p.blockedAgents.join(', '):''}</div>`;
+          });
+        } else {
+          plages.filter(p=>!p.blockedAgents||p.blockedAgents.includes(agentFilter)).forEach(p=>{
+            html+=`<div style="border-radius:3px;padding:2px 4px;margin-bottom:2px;font-size:7px;background:#fff3e0;border:1px dashed #ff9f43;color:#b06010;">🚧 ${p.titre}${p.comment?' – '+p.comment:''}</div>`;
+          });
+        }
+      }
       html+=`</td>`;
     });
     html+=`</tr>`;
   });
-  const notesLines=[];
-  AGENTS.forEach(a=>{if(!agentNotes[a])return;DAYS.forEach(d=>{if(agentNotes[a][d])notesLines.push(`${a} · ${d} : ${agentNotes[a][d]}`);});});
   html+=`</tbody></table>`;
-  if(notesLines.length>0){html+=`<div style="margin-top:10px;"><strong style="font-size:8px;">Notes agents</strong><ul style="margin:3px 0;padding-left:12px;">${notesLines.map(l=>`<li style="font-size:7px;color:#444;">${l}</li>`).join('')}</ul></div>`;}
-  html+=`<div class="footer">Généré le ${new Date().toLocaleDateString('fr-FR',{weekday:'long',year:'numeric',month:'long',day:'numeric'})}</div></body></html>`;
-  const wrap=document.createElement('div');wrap.innerHTML=html;document.body.appendChild(wrap);
-  html2pdf().set({margin:8,filename:`planning-${weekStr.replace(/[^a-z0-9]/gi,'-')}.pdf`,image:{type:'jpeg',quality:.98},html2canvas:{scale:2},jsPDF:{unit:'mm',format:'a4',orientation:'landscape'}}).from(wrap).save().then(()=>{document.body.removeChild(wrap);showToast('📄 PDF exporté !');});
+  if(agentFilter){
+    const notesLines=[];
+    DAYS.forEach(d=>{if(agentNotes[agentFilter]&&agentNotes[agentFilter][d])notesLines.push(`${d} : ${agentNotes[agentFilter][d]}`);});
+    if(notesLines.length>0)html+=`<div style="margin-top:8px;"><strong style="font-size:8px;">Notes</strong><ul style="margin:2px 0;padding-left:12px;">${notesLines.map(l=>`<li style="font-size:7px;color:#444;">${l}</li>`).join('')}</ul></div>`;
+  } else {
+    const notesLines=[];
+    AGENTS.forEach(a=>{if(!agentNotes[a])return;DAYS.forEach(d=>{if(agentNotes[a][d])notesLines.push(`${a} · ${d} : ${agentNotes[a][d]}`);});});
+    if(notesLines.length>0)html+=`<div style="margin-top:8px;"><strong style="font-size:8px;">Notes agents</strong><ul style="margin:2px 0;padding-left:12px;">${notesLines.map(l=>`<li style="font-size:7px;color:#444;">${l}</li>`).join('')}</ul></div>`;
+  }
+  return html;
+}
+
+function runPdfExport(pagesHtml,filename){
+  const weekStr=formatWeekDisplay(currentWeekOffset);
+  const css=`<style>body{font-family:Arial,sans-serif;font-size:10px;color:#1a1d2e;}.page{padding:0;}.footer{margin-top:10px;color:#aaa;font-size:7px;text-align:right;}</style>`;
+  const footer=`<div class="footer">Généré le ${new Date().toLocaleDateString('fr-FR',{weekday:'long',year:'numeric',month:'long',day:'numeric'})}</div>`;
+  const body=pagesHtml.map((p,i)=>`<div class="page"${i>0?' style="page-break-before:always;"':''}>${p}${footer}</div>`).join('');
+  const fullHtml=`<html><head>${css}</head><body>${body}<!-- MODAL NOM UTILISATEUR -->
+<div class="modal-overlay" id="modalUserName" style="display:none;">
+  <div class="modal-box">
+    <div class="modal-title">👤 Bienvenue !</div>
+    <div style="font-size:.82rem;color:var(--text2);margin-bottom:12px;line-height:1.5;">Indiquez votre prénom pour que vos collègues sachent qui modifie le planning.</div>
+    <label class="modal-label">Votre prénom</label>
+    <input class="modal-input" type="text" id="userNameInput" placeholder="ex: Michelle…" maxlength="30"/>
+    <div class="modal-actions">
+      <button class="btn-app btn-primary-app" onclick="saveUserName()">✓ Commencer</button>
+    </div>
+  </div>
+</div>
+
+</body></html>`;
+  const wrap=document.createElement('div');wrap.innerHTML=fullHtml;document.body.appendChild(wrap);
+  html2pdf().set({margin:8,filename:`${filename}-${weekStr.replace(/[^a-z0-9]/gi,'-')}.pdf`,image:{type:'jpeg',quality:.98},html2canvas:{scale:2},jsPDF:{unit:'mm',format:'a4',orientation:'landscape'}}).from(wrap).save().then(()=>{document.body.removeChild(wrap);showToast('📄 PDF exporté !');});
+}
+
+function openPdfModal(){
+  const sel=document.getElementById('pdfAgentSelect');
+  sel.innerHTML=AGENTS.map(a=>`<option value="${a}">${a}</option>`).join('');
+  const icalSel=document.getElementById('icalAgentSelect');
+  icalSel.innerHTML='<option value="">— Tous les agents —</option>'+AGENTS.map(a=>`<option value="${a}">${a}</option>`).join('');
+  selectPdfChoice('general');
+  document.getElementById('modalPdfExport').style.display='flex';
+}
+
+function selectPdfChoice(val){
+  ['general','agent','full','ical'].forEach(v=>{
+    const row=document.getElementById('pdfChoice-'+v);
+    if(!row)return;
+    const radio=row.querySelector('input[type=radio]');
+    row.classList.toggle('selected',v===val);
+    radio.checked=(v===val);
+  });
+  document.getElementById('pdfAgentSelectWrap').style.display=(val==='agent')?'block':'none';
+  document.getElementById('icalAgentSelectWrap').style.display=(val==='ical')?'block':'none';
+}
+
+function launchPdfExport(){
+  const choice=document.querySelector('input[name="pdfChoice"]:checked').value;
+  closeModal('modalPdfExport');
+  if(choice==='ical'){
+    const agent=document.getElementById('icalAgentSelect').value||null;
+    exportICal(agent);
+  } else if(choice==='general'){
+    runPdfExport([buildPdfPageHtml(null)],'planning');
+  } else if(choice==='agent'){
+    const agent=document.getElementById('pdfAgentSelect').value;
+    runPdfExport([buildPdfPageHtml(agent)],'planning-'+agent.toLowerCase());
+  } else {
+    const pages=[buildPdfPageHtml(null),...AGENTS.filter(a=>!isAgentFullyAbsent(a)).map(a=>buildPdfPageHtml(a))];
+    runPdfExport(pages,'planning-complet');
+  }
 }
 
 // ============================================================
@@ -1736,12 +2234,19 @@ function renderAdminRules(){
   if(!fixedRules.length){c.innerHTML='<div style="font-size:.78rem;color:var(--text2);padding:8px;">Aucune règle. Ajoutez-en une ci-dessous.</div>';return;}
   let h='';
   fixedRules.forEach((r,i)=>{
-    const agDesc=r.agents&&r.agents.length?'Agents: '+r.agents.join(', '):"Toute l'équipe";
-    const minDesc=r.minAgents>0?' | Min '+r.minAgents+' agents':'';
+    let ruleName,agDesc;
+    if(r.type==='plage'){
+      ruleName=`${r.day} ${r.slot} — 🚧 ${r.plageTitre||'Plage contrainte'}`;
+      agDesc=r.plageBlockedAgents&&r.plageBlockedAgents.length?'Bloqués: '+r.plageBlockedAgents.join(', '):'Aucun agent bloqué';
+    } else {
+      ruleName=`${r.day} ${r.slot} — ${r.activity}`;
+      agDesc=r.agents&&r.agents.length?'Agents: '+r.agents.join(', '):"Toute l'équipe";
+    }
+    const minDesc=(!r.type||r.type==='activity')&&r.minAgents>0?' | Min '+r.minAgents+' agents':'';
     h+=`<div class="rule-row ${r.enabled?'':'rule-disabled'}">
       <input type="checkbox" class="rule-toggle" ${r.enabled?'checked':''} onchange="toggleRule(${i},this.checked)"/>
       <div class="rule-info">
-        <div class="rule-name">${r.day} ${r.slot} — ${r.activity}</div>
+        <div class="rule-name">${ruleName}</div>
         <div class="rule-detail">${agDesc}${minDesc}${r.desc?' | '+r.desc:''}</div>
       </div>
       <button class="rule-edit-btn" onclick="openRuleEditModal(${i})">✏️</button>
@@ -1752,17 +2257,25 @@ function renderAdminRules(){
 }
 function toggleRule(i,v){fixedRules[i].enabled=v;saveWeekData();renderAdminRules();showToast(v?'✅ Règle activée':'⏸ Règle désactivée');}
 function deleteRule(i){if(!confirm('Supprimer cette règle ?'))return;fixedRules.splice(i,1);saveWeekData();renderAdminRules();showToast('🗑 Règle supprimée');}
+function toggleRuleTypeFields(type){
+  document.getElementById('ruleActivityFields').style.display=type==='activity'?'block':'none';
+  document.getElementById('rulePlageFields').style.display=type==='plage'?'block':'none';
+}
 function openRuleEditModal(i){
   const isNew=(i===null);
   document.getElementById('ruleEditTitle').textContent=isNew?'➕ Nouvelle règle fixe':'✏️ Modifier la règle';
   document.getElementById('ruleEditIdx').value=isNew?'':i;
-  const r=isNew?{day:'Lundi',slot:'Matin',activity:'CVM',agents:[],minAgents:0,desc:'',enabled:true}:fixedRules[i];
+  const r=isNew?{type:'activity',day:'Lundi',slot:'Matin',activity:'CVM',agents:[],minAgents:0,desc:'',enabled:true}:fixedRules[i];
+  const ruleType=r.type||'activity';
+  document.getElementById('ruleType').value=ruleType;
+  toggleRuleTypeFields(ruleType);
   document.getElementById('ruleDay').value=r.day;
   document.getElementById('ruleSlot').value=r.slot;
-  document.getElementById('ruleActivity').innerHTML=ACTIVITIES.map(a=>`<option value="${a}">${a}</option>`).join('');
-  document.getElementById('ruleActivity').value=r.activity;
-  document.getElementById('ruleMinAgents').value=r.minAgents||0;
   document.getElementById('ruleDesc').value=r.desc||'';
+  // Activity fields
+  document.getElementById('ruleActivity').innerHTML=ACTIVITIES.map(a=>`<option value="${a}">${a}</option>`).join('');
+  document.getElementById('ruleActivity').value=r.activity||'CVM';
+  document.getElementById('ruleMinAgents').value=r.minAgents||0;
   const ac=document.getElementById('ruleAgentChecks');let h='';
   AGENTS.forEach(a=>{
     const chk=(r.agents||[]).includes(a);const col=AGENT_COLORS[a]||'#888';const init=a.substring(0,2).toUpperCase();
@@ -1773,25 +2286,56 @@ function openRuleEditModal(i){
     </div>`;
   });
   ac.innerHTML=h;
+  // Plage fields
+  document.getElementById('rulePlageTitre').value=r.plageTitre||'';
+  document.getElementById('rulePlageComment').value=r.plageComment||'';
+  buildAgentCheckList('rulePlageAgentChecks',r.plageBlockedAgents||[]);
   document.getElementById('modalRuleEdit').style.display='flex';
 }
 function saveRuleEdit(){
   const idxVal=document.getElementById('ruleEditIdx').value;
   const isNew=(idxVal==='');
-  const agents=getCheckedBlockedAgents('ruleAgentChecks');
   const existing=isNew?{}:(fixedRules[parseInt(idxVal)]||{});
-  const rule={
-    id:isNew?'r'+Date.now():(fixedRules[parseInt(idxVal)]||{}).id||('r'+Date.now()),
+  const ruleType=document.getElementById('ruleType').value;
+  const baseRule={
+    id:isNew?'r'+Date.now():(existing.id||('r'+Date.now())),
+    type:ruleType,
     day:document.getElementById('ruleDay').value,
     slot:document.getElementById('ruleSlot').value,
-    activity:document.getElementById('ruleActivity').value,
-    agents,minAgents:parseInt(document.getElementById('ruleMinAgents').value)||0,
-    desc:document.getElementById('ruleDesc').value.trim(),enabled:true,
-    nonBlocking:!!existing.nonBlocking
+    desc:document.getElementById('ruleDesc').value.trim(),
+    enabled:true
   };
+  let rule;
+  if(ruleType==='plage'){
+    const titre=document.getElementById('rulePlageTitre').value.trim();
+    if(!titre){showToast('⚠ Titre requis pour la plage');return;}
+    rule={...baseRule,
+      plageTitre:titre,
+      plageComment:document.getElementById('rulePlageComment').value.trim(),
+      plageBlockedAgents:getCheckedBlockedAgents('rulePlageAgentChecks'),
+      activity:'Libre',agents:[],minAgents:0
+    };
+  } else {
+    rule={...baseRule,
+      activity:document.getElementById('ruleActivity').value,
+      agents:getCheckedBlockedAgents('ruleAgentChecks'),
+      minAgents:parseInt(document.getElementById('ruleMinAgents').value)||0,
+      nonBlocking:!!existing.nonBlocking
+    };
+  }
   if(isNew)fixedRules.push(rule);else fixedRules[parseInt(idxVal)]=rule;
   saveWeekData();renderAdminRules();closeModal('modalRuleEdit');
   showToast(isNew?'➕ Règle ajoutée':'✏️ Règle mise à jour');
+}
+function resetPlanningVierge(){
+  if(!confirm('Remettre le planning de cette semaine à zéro ?\n\nToutes les activités et plages de la semaine en cours seront effacées. L\'historique et la configuration (équipe, règles) sont conservés.'))return;
+  pushUndo();
+  planningData={};plageData={};agentNotes={};
+  locked=false;
+  logChange('Planning remis à zéro');
+  saveWeekData();updateLockUI();renderAll();
+  closeModal('modalAdmin');
+  showToast('🗑 Planning remis à zéro');
 }
 function openAdminModal(){
   document.getElementById('adminTitleInput').value=appTitle;
@@ -1800,16 +2344,53 @@ function openAdminModal(){
   document.getElementById('modalAdmin').style.display='flex';
 }
 function showAdminTab(t){
-  ['rules','title','export','activities'].forEach(tab=>{
+  ['rules','title','export','activities','journal'].forEach(tab=>{
     const p=document.getElementById('adminTab'+tab.charAt(0).toUpperCase()+tab.slice(1));
     if(p)p.style.display=(tab===t)?'block':'none';
     const b=document.getElementById('aTab-'+tab);
     if(b)b.classList.toggle('active',tab===t);
   });
+  if(t==='journal')renderAdminJournal();
 }
 function saveAdminTitle(){
   const v=(document.getElementById('adminTitleInput').value.trim())||DEFAULT_TITLE;
   applyTitle(v);saveWeekData();showToast('✏️ Titre mis à jour');
+}
+async function exportHTMLWithConfig(){
+  let src;
+  try{
+    const resp=await fetch(window.location.href);
+    src=await resp.text();
+  }catch(e){
+    src='<!DOCTYPE html>\n'+document.documentElement.outerHTML;
+  }
+  // Embed current team
+  src=src.replace(
+    /const AGENTS_DEFAULT=\[.*?\];/,
+    'const AGENTS_DEFAULT='+JSON.stringify(AGENTS)+';'
+  );
+  src=src.replace(
+    /const AGENT_COLORS_DEFAULT=\{[^}]*\};/,
+    'const AGENT_COLORS_DEFAULT='+JSON.stringify(AGENT_COLORS)+';'
+  );
+  // Embed current title
+  src=src.replace(
+    /const DEFAULT_TITLE='[^']*';/,
+    "const DEFAULT_TITLE="+JSON.stringify(appTitle)+";"
+  );
+  // Embed current rules (multiline block)
+  src=src.replace(
+    /const DEFAULT_RULES=\[[\s\S]*?\];(\s*let fixedRules)/,
+    'const DEFAULT_RULES='+JSON.stringify(fixedRules)+';$1'
+  );
+  const safeName=(appTitle||'Planning').replace(/[^a-z0-9àâäéèêëîïôùûüç\s-]/gi,'').trim();
+  const blob=new Blob([src],{type:'text/html;charset=utf-8'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=safeName+' - Sauvegardé.html';
+  a.click();
+  showToast('💾 Fichier HTML sauvegardé avec votre configuration !');
+  logChange('Export HTML avec configuration intégrée');
 }
 function exportConfig(){
   const cfg={appTitle,agents:AGENTS,colors:AGENT_COLORS,fixedRules,activities:ACTIVITIES,activityColors:ACT_COLORS_HEX};
@@ -1887,21 +2468,34 @@ function renderWizAgents(){
     <button class="team-del-btn" ${wizAgents.length>1?'':'disabled'} onclick="wizAgents.splice(${i},1);renderWizAgents()">🗑</button></div>`;
   });c.innerHTML=h;
 }
-function wizAddRule(){wizRules.push({id:'r'+Date.now(),day:'Lundi',slot:'Matin',activity:'CVM',agents:[],minAgents:0,desc:'',enabled:true});renderWizRules();}
+function wizAddRule(){wizRules.push({id:'r'+Date.now(),type:'activity',day:'Lundi',slot:'Matin',activity:'CVM',agents:[],minAgents:0,desc:'',enabled:true});renderWizRules();}
 function renderWizRules(){
   const c=document.getElementById('wizRulesList');if(!c)return;
   let h='';
+  const sel=(tag,opts,val,onch)=>`<select style="flex:1;min-width:80px;border:1.5px solid var(--border);border-radius:6px;padding:4px 6px;font-family:Outfit,sans-serif;font-size:.76rem;background:var(--surface);" onchange="${onch}">${opts.map(o=>`<option value="${o.v||o}" ${(o.v||o)===val?'selected':''}>${o.l||o}</option>`).join('')}</select>`;
   wizRules.forEach((r,i)=>{
-    const actOpts=ACTIVITIES.map(a=>`<option ${r.activity===a?'selected':''}>${a}</option>`).join('');
-    const dayOpts=DAYS.map(d=>`<option ${r.day===d?'selected':''}>${d}</option>`).join('');
-    h+=`<div style="background:var(--surface2);border-radius:8px;padding:8px 10px;margin-bottom:6px;border:1.5px solid var(--border);">
+    const rType=r.type||'activity';
+    const dayOpts=DAYS.map(d=>d);
+    const slotOpts=[{v:'Matin',l:'Matin'},{v:'Après-midi',l:'Après-midi'}];
+    const typeOpts=[{v:'activity',l:'Activité'},{v:'plage',l:'🚧 Plage contrainte'}];
+    const borderColor=rType==='plage'?'#ff9f43':'var(--border)';
+    h+=`<div style="background:var(--surface2);border-radius:8px;padding:8px 10px;margin-bottom:6px;border:1.5px solid ${borderColor};">
       <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:5px;">
-        <select style="flex:1;min-width:80px;border:1.5px solid var(--border);border-radius:6px;padding:4px 6px;font-family:Outfit,sans-serif;font-size:.76rem;background:var(--surface);" onchange="wizRules[${i}].day=this.value">${dayOpts}</select>
-        <select style="flex:1;min-width:80px;border:1.5px solid var(--border);border-radius:6px;padding:4px 6px;font-family:Outfit,sans-serif;font-size:.76rem;background:var(--surface);" onchange="wizRules[${i}].slot=this.value"><option ${r.slot==='Matin'?'selected':''}>Matin</option><option ${r.slot==='Après-midi'?'selected':''} value="Après-midi">Après-midi</option></select>
-        <select style="flex:2;min-width:120px;border:1.5px solid var(--border);border-radius:6px;padding:4px 6px;font-family:Outfit,sans-serif;font-size:.76rem;background:var(--surface);" onchange="wizRules[${i}].activity=this.value">${actOpts}</select>
+        ${sel('',typeOpts,rType,`wizRules[${i}].type=this.value;renderWizRules()`)}
+        ${sel('',dayOpts,r.day,`wizRules[${i}].day=this.value`)}
+        ${sel('',slotOpts,r.slot,`wizRules[${i}].slot=this.value`)}
         <button style="border:none;background:#fff0f2;color:#c0293c;border-radius:5px;padding:3px 8px;cursor:pointer;font-size:.76rem;" onclick="wizRules.splice(${i},1);renderWizRules()">✕</button>
-      </div>
-      <input type="text" value="${r.desc||''}" placeholder="Description (optionnel)" style="width:100%;border:1.5px solid var(--border);border-radius:6px;padding:4px 8px;font-family:Outfit,sans-serif;font-size:.74rem;background:var(--surface);" oninput="wizRules[${i}].desc=this.value"/>
+      </div>`;
+    if(rType==='plage'){
+      h+=`<input type="text" value="${r.plageTitre||''}" placeholder="Titre de la plage (ex: Réunion DRH)…" style="width:100%;border:1.5px solid var(--border);border-radius:6px;padding:4px 8px;font-family:Outfit,sans-serif;font-size:.74rem;background:var(--surface);margin-bottom:4px;" oninput="wizRules[${i}].plageTitre=this.value"/>`;
+    } else {
+      const actOpts=ACTIVITIES.map(a=>`<option ${r.activity===a?'selected':''}>${a}</option>`).join('');
+      h+=`<div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:5px;">
+        <select style="flex:2;min-width:120px;border:1.5px solid var(--border);border-radius:6px;padding:4px 6px;font-family:Outfit,sans-serif;font-size:.76rem;background:var(--surface);" onchange="wizRules[${i}].activity=this.value">${actOpts}</select>
+        <input type="number" min="0" max="10" value="${r.minAgents||0}" placeholder="Min agents" title="Minimum d'agents (0=tous)" style="width:70px;border:1.5px solid var(--border);border-radius:6px;padding:4px 6px;font-family:Outfit,sans-serif;font-size:.76rem;background:var(--surface);" oninput="wizRules[${i}].minAgents=parseInt(this.value)||0"/>
+      </div>`;
+    }
+    h+=`<input type="text" value="${r.desc||''}" placeholder="Description courte (optionnel)" style="width:100%;border:1.5px solid var(--border);border-radius:6px;padding:4px 8px;font-family:Outfit,sans-serif;font-size:.74rem;background:var(--surface);" oninput="wizRules[${i}].desc=this.value"/>
     </div>`;
   });c.innerHTML=h;
 }
@@ -1909,11 +2503,15 @@ function wizFinish(){
   if(!wizAgents.filter(a=>a.name).length){showToast('⚠ Ajoutez au moins un agent');return;}
   AGENTS=wizAgents.filter(a=>a.name).map(a=>a.name);
   wizAgents.filter(a=>a.name).forEach(a=>{AGENT_COLORS[a.name]=a.color;});
-  fixedRules=wizRules;
+  fixedRules=wizRules.map(r=>({...r,type:r.type||'activity'}));
   presence={};AGENTS.forEach(a=>{presence[a]={};DAYS.forEach(d=>presence[a][d]=true);});
+  plannedAbsences={};weekTemplate=null;changeLog=[];
+  savePlannedAbsences();saveChangeLog();
   saveWeekData();localStorage.setItem('ft-setup-done','1');
-  closeModal('modalWizard');renderAgents();renderAll();
-  showToast('🎉 Configuration enregistrée !');
+  closeModal('modalWizard');
+  renderAgents();
+  logChange('Premier lancement — équipe configurée: '+AGENTS.join(', '));
+  generatePlanning('🎉 Bienvenue ! Planning généré automatiquement.');
 }
 
 // ============================================================
@@ -1958,36 +2556,521 @@ function checkPizzaEgg(titre){
 }
 
 // ============================================================
+// FEATURE 1 & 3 — STATISTIQUES MULTI-SEMAINES + ÉQUITÉ
+// ============================================================
+function openStatsModal(){
+  renderStatsModal();
+  document.getElementById('modalStats').style.display='flex';
+}
+
+function renderStatsModal(){
+  const nWeeks=parseInt(document.getElementById('statsNWeeks').value)||8;
+  const content=document.getElementById('statsContent');
+
+  // Collect data from history
+  const keys=Object.keys(planningHistory).sort().reverse().slice(0,nWeeks);
+  if(keys.length===0){content.innerHTML='<div style="font-size:.8rem;color:var(--text2);padding:10px;">Aucun historique disponible.</div>';return;}
+
+  // Count per agent per activity
+  const agentActCounts={}; // {agent: {activity: count}}
+  AGENTS.forEach(a=>{agentActCounts[a]={};});
+
+  keys.forEach(key=>{
+    const w=planningHistory[key];
+    if(!w||!w.planningData)return;
+    DAYS.forEach(d=>{
+      SLOTS.forEach(s=>{
+        const arr=(w.planningData[d]&&w.planningData[d][s])||[];
+        arr.forEach(item=>{
+          if(!item.agent||!item.activity)return;
+          if(!agentActCounts[item.agent])agentActCounts[item.agent]={};
+          agentActCounts[item.agent][item.activity]=(agentActCounts[item.agent][item.activity]||0)+1;
+        });
+      });
+    });
+  });
+
+  let html=`<table class="stats-table"><thead><tr>
+    <th>Agent</th><th>Total créneaux</th><th>Top activité</th><th>Répartition</th><th>Équité</th>
+  </tr></thead><tbody>`;
+
+  AGENTS.forEach(agent=>{
+    const counts=agentActCounts[agent]||{};
+    const total=Object.values(counts).reduce((a,b)=>a+b,0);
+    if(total===0){
+      html+=`<tr><td><strong>${agent}</strong></td><td>0</td><td>—</td><td>—</td><td>—</td></tr>`;
+      return;
+    }
+    const sorted=Object.entries(counts).sort((a,b)=>b[1]-a[1]);
+    const [topAct,topCount]=sorted[0];
+    const topPct=Math.round((topCount/total)*100);
+    const isOk=topPct<45;
+    const equityBadge=isOk
+      ?`<span class="equity-ok">✓ OK</span>`
+      :`<span class="equity-warn">⚠ Déséquilibré</span>`;
+
+    // Mini bar chart
+    let bars='<div style="display:flex;gap:2px;align-items:center;flex-wrap:wrap;">';
+    sorted.slice(0,6).forEach(([act,cnt])=>{
+      const pct=Math.round((cnt/total)*100);
+      const color=ACT_COLORS_HEX[act]||'#888';
+      const w=Math.max(12,Math.round(pct*0.8));
+      bars+=`<div title="${act}: ${cnt} (${pct}%)" style="height:10px;width:${w}px;background:${color};border-radius:2px;opacity:.85;"></div>`;
+    });
+    bars+='</div>';
+
+    html+=`<tr>
+      <td><strong>${agent}</strong></td>
+      <td>${total}</td>
+      <td><span style="font-size:.7rem;">${topAct}</span> <span style="font-size:.64rem;color:var(--text2);">${topPct}%</span></td>
+      <td>${bars}</td>
+      <td>${equityBadge}</td>
+    </tr>`;
+  });
+
+  html+=`</tbody></table>`;
+  html+=`<div style="font-size:.67rem;color:var(--text2);margin-top:8px;">Basé sur ${keys.length} semaine${keys.length>1?'s':''} · Équité: déséquilibré si top activité ≥ 45% du total</div>`;
+  content.innerHTML=html;
+}
+
+// ============================================================
+// FEATURE 2 — VUE RÉCAPITULATIVE AGENT
+// ============================================================
+function renderAgentRecap(){
+  const section=document.getElementById('agentRecapSection');
+  const zone=document.getElementById('agentRecapZone');
+  const title=document.getElementById('agentRecapTitle');
+  if(!spotlightAgent){section.style.display='none';return;}
+  section.style.display='block';
+  title.innerHTML=`Récap — <strong>${spotlightAgent}</strong> <span class="sidebar-title-action" onclick="setSpotlight(null)" style="cursor:pointer;">✕</span>`;
+
+  let html='<div class="agent-recap-grid">';
+  DAYS.forEach(d=>{
+    html+=`<div class="recap-day-row">`;
+    html+=`<div class="recap-day-lbl">${d.substring(0,2)}</div>`;
+    SLOTS.forEach(s=>{
+      const arr=(planningData[d]&&planningData[d][s])||[];
+      const item=arr.find(x=>x.agent===spotlightAgent);
+      const isAbsent=!isAgentPresentOnDay(spotlightAgent,d);
+      const isFerie=isDayFerie(d);
+      let chipStyle='';let label='—';
+      if(isFerie){chipStyle='background:#fff3e0;color:#b85c00;';label='Férié';}
+      else if(isAbsent){chipStyle='background:#f0f0f8;color:#aaa;';label='Abs.';}
+      else if(item){
+        const color=ACT_COLORS_HEX[item.activity]||'#888';
+        chipStyle=`background:${color}26;color:${color};border-color:${color}44;`;
+        const abbrev=item.activity.length>10?item.activity.substring(0,9)+'…':item.activity;
+        label=abbrev;
+      } else {
+        chipStyle='background:var(--surface2);color:var(--text2);';label='—';
+      }
+      html+=`<div class="recap-slot-chip" style="${chipStyle}" title="${s}">${label}</div>`;
+    });
+    html+=`</div>`;
+  });
+  html+='</div>';
+  zone.innerHTML=html;
+}
+
+// ============================================================
+// FEATURE 4 — ABSENCES PLANIFIÉES
+// ============================================================
+let plannedAbsences={};
+
+function loadPlannedAbsences(){
+  const s=localStorage.getItem('ft-planned-absences');
+  plannedAbsences=s?JSON.parse(s):{};
+}
+function savePlannedAbsences(){
+  localStorage.setItem('ft-planned-absences',JSON.stringify(plannedAbsences));
+}
+
+function applyPlannedAbsencesForCurrentWeek(){
+  const key=getWeekKey(currentWeekOffset);
+  AGENTS.forEach(agent=>{
+    const list=(plannedAbsences[agent])||[];
+    list.forEach(entry=>{
+      if(entry.weekKey===key){
+        if(!presence[agent])presence[agent]={};
+        (entry.days||[]).forEach(d=>{presence[agent][d]=false;});
+      }
+    });
+  });
+}
+
+function openPlannedAbsencesModal(){
+  // Populate agent select
+  const agSel=document.getElementById('absenceAgent');
+  agSel.innerHTML=AGENTS.map(a=>`<option value="${a}">${a}</option>`).join('');
+  // Populate week select: current ±8 weeks
+  const wkSel=document.getElementById('absenceWeek');
+  let wkOpts='';
+  for(let i=-8;i<=8;i++){
+    const key=getWeekKey(i);
+    const label=formatWeekDisplay(i);
+    wkOpts+=`<option value="${i}" ${i===0?'selected':''}>${label}</option>`;
+  }
+  wkSel.innerHTML=wkOpts;
+  // Days grid
+  renderAbsenceDaysGrid();
+  // List
+  renderPlannedAbsencesList();
+  document.getElementById('modalPlannedAbsences').style.display='flex';
+}
+
+function renderAbsenceDaysGrid(){
+  const grid=document.getElementById('absenceDaysGrid');
+  let html='';
+  DAYS.forEach(d=>{
+    html+=`<div class="ferie-cell" id="absDay-${d}" onclick="toggleAbsDay('${d}')" title="${d}">
+      <span class="ferie-icon">📅</span>
+      <span class="ferie-lbl">${d.substring(0,2)}</span>
+      <input type="checkbox" class="ferie-check" id="absDayChk-${d}" onclick="event.stopPropagation();toggleAbsDay('${d}')"/>
+    </div>`;
+  });
+  grid.innerHTML=html;
+}
+
+function toggleAbsDay(d){
+  const chk=document.getElementById('absDayChk-'+d);
+  const cell=document.getElementById('absDay-'+d);
+  chk.checked=!chk.checked;
+  cell.classList.toggle('is-ferie',chk.checked);
+}
+
+function getCheckedAbsDays(){
+  return DAYS.filter(d=>{const c=document.getElementById('absDayChk-'+d);return c&&c.checked;});
+}
+
+function addPlannedAbsence(){
+  const agent=document.getElementById('absenceAgent').value;
+  const wkOffset=parseInt(document.getElementById('absenceWeek').value);
+  const days=getCheckedAbsDays();
+  if(!days.length){showToast('⚠ Sélectionnez au moins un jour');return;}
+  const weekKey=getWeekKey(wkOffset);
+  const weekLabel=formatWeekDisplay(wkOffset);
+  if(!plannedAbsences[agent])plannedAbsences[agent]=[];
+  // Remove existing entry for same week
+  plannedAbsences[agent]=plannedAbsences[agent].filter(e=>e.weekKey!==weekKey);
+  plannedAbsences[agent].push({weekKey,weekLabel,days});
+  savePlannedAbsences();
+  // Apply immediately if it's current week
+  if(wkOffset===currentWeekOffset){
+    applyPlannedAbsencesForCurrentWeek();
+    saveWeekData();renderAgents();renderPlanning();
+  }
+  renderPlannedAbsencesList();
+  // Reset days
+  DAYS.forEach(d=>{
+    const chk=document.getElementById('absDayChk-'+d);const cell=document.getElementById('absDay-'+d);
+    if(chk){chk.checked=false;}if(cell){cell.classList.remove('is-ferie');}
+  });
+  showToast(`📅 Absence planifiée pour ${agent} — ${weekLabel}`);
+}
+
+function renderPlannedAbsencesList(){
+  const c=document.getElementById('plannedAbsencesList');
+  let html='';
+  let any=false;
+  AGENTS.forEach(agent=>{
+    const list=(plannedAbsences[agent])||[];
+    list.forEach((entry,i)=>{
+      any=true;
+      const color=AGENT_COLORS[agent]||'#888';
+      const init=agent.substring(0,2).toUpperCase();
+      html+=`<div class="absence-row">
+        <div class="absence-agent-dot" style="background:${color}">${init}</div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:.78rem;font-weight:600;">${agent}</div>
+          <div style="font-size:.68rem;color:var(--text2);">${entry.weekLabel} — ${entry.days.join(', ')}</div>
+        </div>
+        <button class="absence-del" onclick="deletePlannedAbsence('${agent}',${i})" title="Supprimer">🗑</button>
+      </div>`;
+    });
+  });
+  if(!any)html='<div style="font-size:.78rem;color:var(--text2);padding:8px;">Aucune absence planifiée.</div>';
+  c.innerHTML=html;
+}
+
+function deletePlannedAbsence(agent,i){
+  if(!plannedAbsences[agent])return;
+  plannedAbsences[agent].splice(i,1);
+  savePlannedAbsences();
+  renderPlannedAbsencesList();
+  showToast('🗑 Absence supprimée');
+}
+
+// ============================================================
+// FEATURE 5 — SEMAINE TYPE / TEMPLATE
+// ============================================================
+let weekTemplate=null;
+
+function loadTemplate(){
+  const s=localStorage.getItem('ft-template');
+  weekTemplate=s?JSON.parse(s):null;
+  updateTemplateUI();
+}
+function updateTemplateUI(){
+  const btn=document.getElementById('btnApplyTemplate');
+  if(btn)btn.style.display=weekTemplate?'':'none';
+}
+function saveTemplate(){
+  weekTemplate={planningData:JSON.parse(JSON.stringify(planningData)),plageData:JSON.parse(JSON.stringify(plageData)),savedAt:new Date().toISOString(),weekLabel:formatWeekDisplay(currentWeekOffset)};
+  localStorage.setItem('ft-template',JSON.stringify(weekTemplate));
+  updateTemplateUI();
+  logChange('Modèle de semaine sauvegardé');
+  showToast('💾 Modèle sauvegardé');
+}
+function applyTemplate(){
+  if(!weekTemplate){showToast('⚠ Aucun modèle');return;}
+  if(!confirm(`Appliquer le modèle (semaine ${weekTemplate.weekLabel}) à la semaine actuelle ? Le planning actuel sera remplacé.`))return;
+  pushUndo();
+  planningData=JSON.parse(JSON.stringify(weekTemplate.planningData));
+  plageData=JSON.parse(JSON.stringify(weekTemplate.plageData));
+  saveWeekData();renderAll();
+  logChange('Modèle appliqué depuis '+weekTemplate.weekLabel);
+  showToast('📋 Modèle appliqué');
+}
+
+// ============================================================
+// FEATURE 6 — COPIER-COLLER SEMAINE
+// ============================================================
+let copiedWeekData=null;
+
+function copyWeek(){
+  copiedWeekData={
+    planningData:JSON.parse(JSON.stringify(planningData)),
+    plageData:JSON.parse(JSON.stringify(plageData)),
+    fromLabel:formatWeekDisplay(currentWeekOffset)
+  };
+  updateCopyPasteUI();
+  showToast('📋 Semaine copiée : '+copiedWeekData.fromLabel);
+}
+function pasteWeek(){
+  if(!copiedWeekData){showToast('⚠ Rien à coller');return;}
+  if(!confirm(`Coller la semaine copiée (${copiedWeekData.fromLabel}) dans la semaine actuelle ? Le planning actuel sera remplacé.`))return;
+  pushUndo();
+  planningData=JSON.parse(JSON.stringify(copiedWeekData.planningData));
+  plageData=JSON.parse(JSON.stringify(copiedWeekData.plageData));
+  saveWeekData();renderAll();
+  logChange('Semaine collée depuis '+copiedWeekData.fromLabel);
+  showToast('📋 Semaine collée');
+}
+function updateCopyPasteUI(){
+  const btn=document.getElementById('btnPasteWeek');
+  if(btn)btn.style.display=copiedWeekData?'':'none';
+}
+
+// ============================================================
+// FEATURE 7 — EXPORT iCal
+// ============================================================
+function exportICal(agentFilter){
+  const weekKey=getWeekKey(currentWeekOffset);
+  const monday=getMonday(currentWeekOffset);
+  function pad(n){return String(n).padStart(2,'0');}
+  function toICalDate(dateObj,hour,min){
+    const y=dateObj.getFullYear();
+    const mo=pad(dateObj.getMonth()+1);
+    const d=pad(dateObj.getDate());
+    const h=pad(hour);const m=pad(min);
+    return `${y}${mo}${d}T${h}${m}00`;
+  }
+  const slotTimes={Matin:{start:[9,0],end:[12,0]},'Après-midi':{start:[14,0],end:[18,0]}};
+  let ics='BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//Planning Essentiel//FR\r\nCALSCALE:GREGORIAN\r\n';
+
+  DAYS.forEach((day,di)=>{
+    if(isDayFerie(day))return;
+    const dayDate=new Date(monday);dayDate.setDate(monday.getDate()+di);
+    SLOTS.forEach(slot=>{
+      const arr=(planningData[day]&&planningData[day][slot])||[];
+      const filtered=agentFilter?arr.filter(x=>x.agent===agentFilter&&isAgentPresentOnDay(x.agent,day)):arr.filter(x=>isAgentPresentOnDay(x.agent,day));
+      filtered.forEach(item=>{
+        const times=slotTimes[slot];
+        const dtStart=toICalDate(dayDate,times.start[0],times.start[1]);
+        const dtEnd=toICalDate(dayDate,times.end[0],times.end[1]);
+        const uid=`${weekKey}-${day}-${slot}-${item.agent}-${Date.now()}-${Math.random().toString(36).slice(2)}@planning-essentiel`;
+        const summary=`${item.agent} — ${item.activity}`;
+        ics+=`BEGIN:VEVENT\r\nUID:${uid}\r\nDTSTART:${dtStart}\r\nDTEND:${dtEnd}\r\nSUMMARY:${summary}\r\nEND:VEVENT\r\n`;
+      });
+    });
+  });
+  ics+='END:VCALENDAR';
+  const filename=`planning${agentFilter?'-'+agentFilter.toLowerCase():''}-${weekKey}.ics`;
+  const blob=new Blob([ics],{type:'text/calendar'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=filename;a.click();
+  showToast('📅 Fichier .ics exporté');
+}
+
+// ============================================================
+// FEATURE 8 — HISTORIQUE DES MODIFICATIONS (CHANGELOG)
+// ============================================================
+let changeLog=[];
+
+function loadChangeLog(){
+  const s=localStorage.getItem('ft-changelog');
+  changeLog=s?JSON.parse(s):[];
+}
+function saveChangeLog(){
+  localStorage.setItem('ft-changelog',JSON.stringify(changeLog.slice(-100)));
+}
+// ============================================================
+// UNDO STACK (3 niveaux, mémoire uniquement)
+// ============================================================
+let undoStack=[];
+let _undoing=false;
+function pushUndo(){
+  if(_undoing)return;
+  undoStack.push({
+    planningData:JSON.parse(JSON.stringify(planningData)),
+    plageData:JSON.parse(JSON.stringify(plageData)),
+    agentNotes:JSON.parse(JSON.stringify(agentNotes)),
+    ferieData:JSON.parse(JSON.stringify(ferieData)),
+    locked
+  });
+  if(undoStack.length>3)undoStack.shift();
+}
+function undoLast(){
+  if(!undoStack.length){showToast('⚠ Rien à annuler (max 3 niveaux)');return;}
+  const snap=undoStack.pop();
+  _undoing=true;
+  planningData=snap.planningData;
+  plageData=snap.plageData;
+  agentNotes=snap.agentNotes;
+  ferieData=snap.ferieData;
+  locked=snap.locked;
+  saveWeekData();
+  _undoing=false;
+  updateLockUI();renderAll();
+  logChange('Annulation (Ctrl+Z)');
+  showToast('↩ Modification annulée'+(undoStack.length?` · encore ${undoStack.length} niveau${undoStack.length>1?'x':''}`:' · pile vide'));
+}
+
+function logChange(desc){
+  changeLog.push({at:new Date().toISOString(),weekKey:getWeekKey(currentWeekOffset),weekLabel:formatWeekDisplay(currentWeekOffset),desc});
+  if(changeLog.length>100)changeLog=changeLog.slice(-100);
+  saveChangeLog();
+}
+function clearChangeLog(){
+  if(!confirm('Vider le journal des modifications ?'))return;
+  changeLog=[];saveChangeLog();renderAdminJournal();
+  showToast('🗑 Journal vidé');
+}
+function weekKeyToOffset(key){
+  if(!key)return 0;
+  const parts=key.split('-W');if(parts.length!==2)return 0;
+  const year=parseInt(parts[0]),week=parseInt(parts[1]);
+  // Monday of ISO week: Jan 4 is always in week 1
+  const jan4=new Date(year,0,4);
+  const jan4Day=jan4.getDay()||7;
+  const targetMon=new Date(jan4);
+  targetMon.setDate(jan4.getDate()-(jan4Day-1)+(week-1)*7);
+  targetMon.setHours(0,0,0,0);
+  const todayMon=getMonday(0);
+  return Math.round((targetMon-todayMon)/(7*24*3600*1000));
+}
+function loadWeekDataByKey(key){
+  if(planningHistory[key]){
+    const w=planningHistory[key];
+    planningData=w.planningData||{};
+    plageData=w.plageData||{};
+    agentNotes=w.agentNotes||{};
+    ferieData=w.ferieData||{};
+    locked=!!w.locked;
+    return true;
+  }
+  planningData={};plageData={};agentNotes={};ferieData={};locked=false;
+  return false;
+}
+function goToJournalWeek(weekKey,weekLabel){
+  const isSame=weekKey===getWeekKey(currentWeekOffset);
+  if(isSame){
+    if(!confirm(`Vous êtes déjà sur cette semaine.\n\nVoulez-vous annuler la dernière modification ? (équivalent Ctrl+Z)`))return;
+    undoLast();return;
+  }
+  const hasSaved=!!planningHistory[weekKey];
+  const msg=hasSaved
+    ?`Charger la semaine "${weekLabel}" ?\n\nLe planning sauvegardé pour cette semaine sera affiché.`
+    :`Charger la semaine "${weekLabel}" ?\n\n⚠ Aucune donnée de planning sauvegardée pour cette semaine — elle s'affichera vide.`;
+  if(!confirm(msg))return;
+  saveWeekData();
+  currentWeekOffset=weekKeyToOffset(weekKey);
+  localStorage.setItem('ft-week',String(currentWeekOffset));
+  // Charge directement par clé pour éviter tout décalage de calcul
+  loadWeekDataByKey(weekKey);
+  applyPlannedAbsencesForCurrentWeek();
+  updateWeekDisplay();updateLockUI();renderAll();
+  closeModal('modalAdmin');
+  showToast(hasSaved?`📅 Semaine ${weekLabel} chargée`:`📅 ${weekLabel} — aucune donnée pour cette semaine`);
+}
+function renderAdminJournal(){
+  const c=document.getElementById('adminJournalList');
+  if(!c)return;
+  const entries=[...changeLog].reverse().slice(0,50);
+  if(!entries.length){c.innerHTML='<div style="font-size:.78rem;color:var(--text2);padding:8px;">Aucune modification enregistrée.</div>';return;}
+  const curKey=getWeekKey(currentWeekOffset);
+  let html='';
+  entries.forEach(e=>{
+    const d=new Date(e.at);
+    const ts=d.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'2-digit'})+' '+d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+    const isCur=e.weekKey===curKey;
+    const hasSaved=!!planningHistory[e.weekKey];
+    const wkLabel=e.weekLabel||e.weekKey||'';
+    const wkSafe=wkLabel.replace(/'/g,"\\'");
+    const wkKeySafe=(e.weekKey||'').replace(/'/g,"\\'");
+    const icon=isCur?'📍':(hasSaved?'📅':'⬜');
+    const weekNote=isCur?' · semaine actuelle':(hasSaved?'':' · aucune donnée sauvegardée');
+    html+=`<div class="changelog-entry" style="cursor:pointer;" onclick="goToJournalWeek('${wkKeySafe}','${wkSafe}')" title="${hasSaved?'Charger cette semaine':'Semaine sans données sauvegardées'}">
+      <div class="changelog-time">${ts}</div>
+      <div style="flex:1;min-width:0;">
+        <div class="changelog-desc">${e.desc}</div>
+        <div style="font-size:.6rem;color:${isCur?'var(--accent)':hasSaved?'var(--text2)':'#886644'};margin-top:1px;">
+          ${icon} ${wkLabel}${weekNote}
+        </div>
+      </div>
+      <div style="font-size:.7rem;color:${hasSaved?'var(--accent)':'#886644'};opacity:.8;padding-left:6px;white-space:nowrap;">${hasSaved?'↩':'?'}</div>
+    </div>`;
+  });
+  c.innerHTML=html;
+  // Hint banner
+  const hint=document.createElement('div');
+  hint.style.cssText='font-size:.68rem;color:var(--text2);padding:6px 4px;border-top:1px solid var(--border);margin-top:6px;';
+  hint.textContent='💡 Cliquer sur une entrée charge la semaine correspondante. Ctrl+Z annule jusqu\'à 3 modifications sur la semaine actuelle.';
+  c.appendChild(hint);
+}
+
+// ============================================================
 // MODAL CLOSE
 // ============================================================
-const MODALS=['modalNote','modalPlage','modalPlageEdit','modalTeam','modalAddBlock','modalHistory','modalEditBlock','modalTitle','modalAdmin','modalRuleEdit','modalWizard'];
+const MODALS=['modalNote','modalPlage','modalPlageEdit','modalTeam','modalAddBlock','modalHistory','modalEditBlock','modalTitle','modalAdmin','modalRuleEdit','modalWizard','modalPdfExport','modalStats','modalPlannedAbsences','modalUserName'];
 MODALS.forEach(id=>{
   const el=document.getElementById(id);
   if(el)el.addEventListener('click',function(e){if(e.target===this)closeModal(id);});
 });
-document.addEventListener('keydown',e=>{if(e.key==='Escape')MODALS.forEach(id=>closeModal(id));});
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape')MODALS.forEach(id=>closeModal(id));
+  if((e.ctrlKey||e.metaKey)&&e.key==='z'&&!e.shiftKey){
+    const active=document.activeElement;
+    if(active&&(active.tagName==='INPUT'||active.tagName==='TEXTAREA'))return;
+    e.preventDefault();undoLast();
+  }
+});
 
 // ============================================================
 // INIT
 // ============================================================
-function init(){
-  initState();
+async function init(){
+  document.getElementById('planningTable').innerHTML='<div style="text-align:center;padding:60px;color:var(--text2);font-size:.9rem;">⏳ Chargement…</div>';
+  await initState();
+  document.getElementById('userNameDisplay').textContent = userName || '?';
   applyTitle(appTitle);
-  updateWeekDisplay();
-  updateLockUI();
-  renderLegend();
-  renderFerieGrid();
-  updateHistorySelect();
-  renderAgents();
-  renderPlanning();
-  updateDashboard();
-  updateStatus();
-  initEasterEggs();
-  if(!localStorage.getItem('ft-setup-done')){
-    setTimeout(openWizard,400);
-  } else if(!Object.keys(planningData).length){
-    setTimeout(generatePlanning,200);
-  }
+  updateWeekDisplay();updateLockUI();renderLegend();renderFerieGrid();
+  updateHistorySelect();renderAgents();renderPlanning();
+  updateDashboard();updateStatus();renderAgentRecap();
+  updateCopyPasteUI();updateTemplateUI();
+  initEasterEggs();initCloneDrag();
+  if(!userName) openUserNameModal();
+  else if(!localStorage.getItem('ft-setup-done')&&!db){setTimeout(openWizard,400);}
+  else if(!Object.keys(planningData).length){setTimeout(generatePlanning,200);}
 }
 document.addEventListener('DOMContentLoaded',init);
 </script>
@@ -2000,6 +3083,7 @@ document.addEventListener('DOMContentLoaded',init);
       <button class="admin-tab-btn" id="aTab-title" onclick="showAdminTab('title')">✏️ Titre</button>
       <button class="admin-tab-btn" id="aTab-export" onclick="showAdminTab('export')">📦 Import/Export</button>
       <button class="admin-tab-btn" id="aTab-activities" onclick="showAdminTab('activities')">🎯 Activités</button>
+      <button class="admin-tab-btn" id="aTab-journal" onclick="showAdminTab('journal')">📝 Journal</button>
     </div>
     <div id="adminTabRules">
       <div style="font-size:.76rem;color:var(--text2);margin-bottom:10px;line-height:1.5;">Règles appliquées à chaque génération. Les règles de votre équipe sont pré-chargées — modifiez-les librement.</div>
@@ -2014,8 +3098,13 @@ document.addEventListener('DOMContentLoaded',init);
     </div>
     <div id="adminTabExport" style="display:none;">
       <div style="display:flex;flex-direction:column;gap:10px;">
+        <div style="background:linear-gradient(135deg,#3a3a5c,#2a2a44);border:1.5px solid var(--accent);border-radius:10px;padding:12px 14px;">
+          <label class="modal-label" style="color:#a8b8ff;font-size:.8rem;">💾 Sauvegarde permanente (survit au nettoyage du navigateur)</label>
+          <div style="font-size:.72rem;color:var(--text2);margin-bottom:8px;line-height:1.5;">Génère une copie de ce fichier HTML avec votre équipe, vos règles et votre titre <strong style="color:#c5d0ff">gravés à l'intérieur</strong>. Remplacez votre fichier actuel par celui téléchargé — même si vous videz les cookies, les réglages seront conservés.</div>
+          <button class="btn-app btn-primary-app" style="width:100%;font-size:.82rem;" onclick="exportHTMLWithConfig()">⬇️ Télécharger le HTML avec ma configuration</button>
+        </div>
         <div><label class="modal-label">Exporter configuration (équipe + règles + titre)</label>
-          <button class="btn-app btn-primary-app" style="width:100%;" onclick="exportConfig()">📥 Télécharger config (.json)</button></div>
+          <button class="btn-app btn-secondary-app" style="width:100%;" onclick="exportConfig()">📥 Télécharger config (.json)</button></div>
         <div><label class="modal-label">Importer une configuration</label>
           <input type="file" id="importConfigFile" accept=".json" style="font-size:.8rem;width:100%;margin-bottom:5px;" onchange="importConfig(this)"/>
           <div style="font-size:.69rem;color:var(--text2);">⚠ Remplace équipe, règles et titre actuels.</div></div>
@@ -2039,7 +3128,18 @@ document.addEventListener('DOMContentLoaded',init);
         <button class="btn-app btn-secondary-app" style="font-size:.74rem;" onclick="resetActivities()">↺ Restaurer la liste par défaut</button>
       </div>
     </div>
-    <div class="modal-actions" style="margin-top:14px;"><button class="btn-app btn-secondary-app" onclick="closeModal('modalAdmin')">Fermer</button></div>
+    <div id="adminTabJournal" style="display:none;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+        <div style="font-size:.76rem;color:var(--text2);">50 dernières modifications (plus récent en premier).</div>
+        <button class="btn-app btn-danger-app" style="font-size:.72rem;padding:4px 9px;" onclick="clearChangeLog()">🗑 Vider</button>
+      </div>
+      <div id="adminJournalList" style="max-height:400px;overflow-y:auto;"></div>
+    </div>
+    <hr style="border:none;border-top:1.5px solid var(--border);margin:14px 0 10px;"/>
+    <div style="display:flex;align-items:center;justify-content:space-between;">
+      <button class="btn-app btn-danger-app" onclick="resetPlanningVierge()">🗑 Remettre le planning à zéro</button>
+      <button class="btn-app btn-secondary-app" onclick="closeModal('modalAdmin')">Fermer</button>
+    </div>
   </div>
 </div>
 
@@ -2047,20 +3147,35 @@ document.addEventListener('DOMContentLoaded',init);
 <div class="modal-overlay" id="modalRuleEdit" style="display:none;">
   <div class="modal-box">
     <div class="modal-title" id="ruleEditTitle">➕ Nouvelle règle fixe</div>
+    <label class="modal-label">Type de règle</label>
+    <select class="modal-input" id="ruleType" onchange="toggleRuleTypeFields(this.value)">
+      <option value="activity">Activité obligatoire</option>
+      <option value="plage">Plage contrainte</option>
+    </select>
     <label class="modal-label">Jour</label>
     <select class="modal-input" id="ruleDay"><option>Lundi</option><option>Mardi</option><option>Mercredi</option><option>Jeudi</option><option>Vendredi</option></select>
     <label class="modal-label">Créneau</label>
     <select class="modal-input" id="ruleSlot"><option value="Matin">Matin</option><option value="Après-midi">Après-midi</option></select>
-    <label class="modal-label">Activité</label>
-    <select class="modal-input" id="ruleActivity">
-      <option>A&amp;P</option><option>DYN / MER</option><option>CVM</option><option>Dossier transversal</option>
-      <option>Corner Essentiel</option><option>Permanence Visio</option><option>Back Office</option>
-      <option>Segmentation travail d'équipe</option><option>Collectif Visio</option><option>Collectif Physique</option><option>Libre</option>
-    </select>
-    <label class="modal-label">Agents concernés <span style="font-size:.68rem;color:var(--text2);font-weight:400;">(vide = toute l'équipe présente)</span></label>
-    <div id="ruleAgentChecks" class="plage-agents-list" style="margin-bottom:9px;"></div>
-    <label class="modal-label">Nombre minimum d'agents <span style="font-size:.68rem;color:var(--text2);font-weight:400;">(0 = tous)</span></label>
-    <input class="modal-input" type="number" id="ruleMinAgents" min="0" max="10" value="0"/>
+    <div id="ruleActivityFields">
+      <label class="modal-label">Activité</label>
+      <select class="modal-input" id="ruleActivity">
+        <option>A&amp;P</option><option>DYN / MER</option><option>CVM</option><option>Dossier transversal</option>
+        <option>Corner Essentiel</option><option>Permanence Visio</option><option>Back Office</option>
+        <option>Segmentation travail d'équipe</option><option>Collectif Visio</option><option>Collectif Physique</option><option>Libre</option>
+      </select>
+      <label class="modal-label">Agents concernés <span style="font-size:.68rem;color:var(--text2);font-weight:400;">(vide = toute l'équipe présente)</span></label>
+      <div id="ruleAgentChecks" class="plage-agents-list" style="margin-bottom:9px;"></div>
+      <label class="modal-label">Nombre minimum d'agents <span style="font-size:.68rem;color:var(--text2);font-weight:400;">(0 = tous)</span></label>
+      <input class="modal-input" type="number" id="ruleMinAgents" min="0" max="10" value="0"/>
+    </div>
+    <div id="rulePlageFields" style="display:none;">
+      <label class="modal-label">Titre de la plage</label>
+      <input class="modal-input" type="text" id="rulePlageTitre" placeholder="ex: Réunion DRH, Formation…"/>
+      <label class="modal-label">Commentaire (optionnel)</label>
+      <textarea class="modal-textarea" id="rulePlageComment" placeholder="Détails…" style="min-height:50px;margin-bottom:9px;"></textarea>
+      <label class="modal-label">Agents bloqués <span style="font-size:.68rem;color:var(--text2);font-weight:400;">(ne peuvent pas faire leur activité normale)</span></label>
+      <div id="rulePlageAgentChecks" class="plage-agents-list" style="margin-bottom:9px;"></div>
+    </div>
     <label class="modal-label">Description courte</label>
     <input class="modal-input" type="text" id="ruleDesc" placeholder="ex: Réunion d'équipe obligatoire"/>
     <input type="hidden" id="ruleEditIdx"/>
@@ -2071,18 +3186,97 @@ document.addEventListener('DOMContentLoaded',init);
   </div>
 </div>
 
+<!-- MODAL PDF EXPORT -->
+<div class="modal-overlay" id="modalPdfExport" style="display:none;">
+  <div class="modal-box">
+    <div class="modal-title">📄 Exporter en PDF</div>
+    <div class="pdf-choice-row selected" id="pdfChoice-general" onclick="selectPdfChoice('general')">
+      <input type="radio" name="pdfChoice" value="general" checked/>
+      <div><div class="pdf-choice-label">Vue générale</div><div class="pdf-choice-sub">Toute l'équipe sur une page (comportement actuel)</div></div>
+    </div>
+    <div class="pdf-choice-row" id="pdfChoice-agent" onclick="selectPdfChoice('agent')">
+      <input type="radio" name="pdfChoice" value="agent"/>
+      <div style="flex:1"><div class="pdf-choice-label">Un seul agent</div><div class="pdf-choice-sub">Planning filtré sur un agent uniquement</div></div>
+    </div>
+    <div id="pdfAgentSelectWrap" style="display:none;padding:0 4px 8px;">
+      <select class="modal-input" id="pdfAgentSelect" style="margin-bottom:0;"></select>
+    </div>
+    <div class="pdf-choice-row" id="pdfChoice-full" onclick="selectPdfChoice('full')">
+      <input type="radio" name="pdfChoice" value="full"/>
+      <div><div class="pdf-choice-label">Complet (général + un agent par page)</div><div class="pdf-choice-sub">Vue générale en première page, puis une page dédiée par agent</div></div>
+    </div>
+    <div class="pdf-choice-row" id="pdfChoice-ical" onclick="selectPdfChoice('ical')">
+      <input type="radio" name="pdfChoice" value="ical"/>
+      <div style="flex:1"><div class="pdf-choice-label">📅 Agenda (.ics)</div><div class="pdf-choice-sub">Exporter au format iCalendar pour Google Calendar, Outlook…</div></div>
+    </div>
+    <div id="icalAgentSelectWrap" style="display:none;padding:0 4px 8px;">
+      <select class="modal-input" id="icalAgentSelect" style="margin-bottom:0;">
+        <option value="">— Tous les agents —</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-app btn-secondary-app" onclick="closeModal('modalPdfExport')">Annuler</button>
+      <button class="btn-app btn-success-app" onclick="launchPdfExport()">📄 Exporter</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL STATS -->
+<div class="modal-overlay" id="modalStats" style="display:none;">
+  <div class="modal-box modal-box-xl">
+    <div class="modal-title">📊 Statistiques multi-semaines</div>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;">
+      <label class="modal-label" style="margin:0;">Période :</label>
+      <select class="history-select" id="statsNWeeks" onchange="renderStatsModal()" style="max-width:140px;">
+        <option value="4">4 semaines</option>
+        <option value="8" selected>8 semaines</option>
+        <option value="12">12 semaines</option>
+      </select>
+    </div>
+    <div id="statsContent" style="max-height:60vh;overflow-y:auto;"></div>
+    <div class="modal-actions" style="margin-top:12px;">
+      <button class="btn-app btn-secondary-app" onclick="closeModal('modalStats')">Fermer</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL PLANNED ABSENCES -->
+<div class="modal-overlay" id="modalPlannedAbsences" style="display:none;">
+  <div class="modal-box modal-box-lg">
+    <div class="modal-title">📅 Absences planifiées à l'avance</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
+      <div style="flex:1;min-width:140px;">
+        <label class="modal-label">Agent</label>
+        <select class="modal-input" id="absenceAgent" style="margin-bottom:0;"></select>
+      </div>
+      <div style="flex:1;min-width:160px;">
+        <label class="modal-label">Semaine</label>
+        <select class="modal-input" id="absenceWeek" style="margin-bottom:0;"></select>
+      </div>
+    </div>
+    <label class="modal-label">Jours concernés</label>
+    <div id="absenceDaysGrid" style="display:grid;grid-template-columns:repeat(5,1fr);gap:5px;margin-bottom:12px;"></div>
+    <button class="btn-app btn-warning-app" style="width:100%;margin-bottom:14px;" onclick="addPlannedAbsence()">➕ Ajouter cette absence planifiée</button>
+    <label class="modal-label">Absences planifiées existantes</label>
+    <div id="plannedAbsencesList" style="max-height:240px;overflow-y:auto;"></div>
+    <div class="modal-actions" style="margin-top:12px;">
+      <button class="btn-app btn-secondary-app" onclick="closeModal('modalPlannedAbsences')">Fermer</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL WIZARD PREMIER LANCEMENT -->
 <div class="modal-overlay" id="modalWizard" style="display:none;">
   <div class="modal-box modal-box-lg">
     <div class="wizard-progress" id="wizardProgress"></div>
     <div id="wizardStep1" class="wizard-step active">
-      <div class="wizard-header"><span class="wizard-icon">👋</span><div class="wizard-title">Bienvenue dans Planning Équipe Essentiel</div><div class="wizard-sub">Configurez votre outil en 3 étapes rapides.<br>Vous pourrez tout modifier à tout moment via ⚙️ Admin.</div></div>
+      <div class="wizard-header"><span class="wizard-icon">👋</span><div class="wizard-title">Bienvenue dans Planning Équipe Essentiel</div><div class="wizard-sub">Configurez votre outil en 3 étapes rapides.<br>Vous pourrez tout modifier à tout moment via ⚙️ Admin.<br><br>✨ <strong>Inclus :</strong> génération automatique, règles fixes, plages contraintes, absences planifiées, export PDF & iCal, statistiques d'équité, historique.</div></div>
       <label class="modal-label">Nom de votre équipe / application</label>
       <input class="modal-input" type="text" id="wiz-title" placeholder="Planning Équipe Essentiel" maxlength="60"/>
       <div class="modal-actions"><button class="btn-app btn-primary-app" onclick="wizNext(2)">Suivant →</button></div>
     </div>
     <div id="wizardStep2" class="wizard-step">
-      <div class="wizard-header"><span class="wizard-icon">👥</span><div class="wizard-title">Votre équipe</div><div class="wizard-sub">Saisissez les prénoms de vos agents.</div></div>
+      <div class="wizard-header"><span class="wizard-icon">👥</span><div class="wizard-title">Votre équipe</div><div class="wizard-sub">Saisissez les prénoms et choisissez une couleur par agent.<br>La couleur apparaîtra sur chaque carte du planning.</div></div>
       <div id="wizAgentRows"></div>
       <button class="add-agent-btn" onclick="wizAddAgent()">＋ Ajouter un agent</button>
       <div class="modal-actions" style="margin-top:12px;">
@@ -2091,7 +3285,7 @@ document.addEventListener('DOMContentLoaded',init);
       </div>
     </div>
     <div id="wizardStep3" class="wizard-step">
-      <div class="wizard-header"><span class="wizard-icon">📋</span><div class="wizard-title">Règles fixes de votre équipe</div><div class="wizard-sub">Définissez les créneaux obligatoires. Les règles de l'équipe Essentiel sont pré-chargées.</div></div>
+      <div class="wizard-header"><span class="wizard-icon">📋</span><div class="wizard-title">Règles fixes de votre équipe</div><div class="wizard-sub">Définissez les créneaux obligatoires et les plages contraintes récurrentes.<br>Les règles de l'équipe Essentiel sont pré-chargées — modifiez ou supprimez librement.<br><span style="font-size:.74rem;color:var(--accent);">Le planning sera généré automatiquement à la fin.</span></div></div>
       <div id="wizRulesList" style="max-height:260px;overflow-y:auto;margin-bottom:8px;"></div>
       <button class="add-agent-btn" style="border-color:var(--accent2);color:var(--accent2);" onclick="wizAddRule()">＋ Ajouter une règle</button>
       <div class="modal-actions" style="margin-top:12px;">
