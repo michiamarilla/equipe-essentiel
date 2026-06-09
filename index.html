@@ -1,0 +1,2106 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title id="pageTitle">Planning Équipe Essentiel</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<style>
+:root{--bg:#f5f6fa;--surface:#ffffff;--surface2:#f0f1f7;--border:#e4e6f0;--accent:#5a67f2;--accent2:#38c8a8;--accent3:#f5a623;--accent4:#e8445a;--plage:#ff9f43;--text:#1a1d2e;--text2:#6b7099;--shadow:0 2px 12px rgba(90,103,242,0.08);--shadow-md:0 4px 24px rgba(90,103,242,0.13);}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+/* HEADER */
+.app-header{background:var(--surface);border-bottom:1.5px solid var(--border);padding:0 20px;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200;box-shadow:var(--shadow);}
+.app-logo{display:flex;align-items:center;gap:9px;font-weight:700;font-size:1.05rem;color:var(--text);cursor:pointer;}
+.logo-icon{width:34px;height:34px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:9px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:1rem;flex-shrink:0;}
+.app-title-text{font-weight:700;}
+.app-subtitle-text{font-weight:300;color:var(--text2);font-size:0.85rem;margin-left:4px;}
+.header-actions{display:flex;gap:6px;align-items:center;flex-wrap:wrap;}
+.btn-app{font-family:'Outfit',sans-serif;font-weight:600;font-size:0.8rem;padding:6px 13px;border-radius:9px;border:none;cursor:pointer;transition:all .18s;display:flex;align-items:center;gap:5px;white-space:nowrap;}
+.btn-primary-app{background:linear-gradient(135deg,var(--accent),#7b86f7);color:#fff;box-shadow:0 2px 8px rgba(90,103,242,.25);}
+.btn-primary-app:hover{transform:translateY(-1px);box-shadow:0 4px 16px rgba(90,103,242,.35);}
+.btn-secondary-app{background:var(--surface2);color:var(--text);border:1.5px solid var(--border);}
+.btn-secondary-app:hover{background:var(--border);}
+.btn-success-app{background:linear-gradient(135deg,var(--accent2),#2fb890);color:#fff;box-shadow:0 2px 8px rgba(56,200,168,.25);}
+.btn-success-app:hover{transform:translateY(-1px);}
+.btn-warning-app{background:linear-gradient(135deg,#f5a623,#e0851a);color:#fff;}
+.btn-warning-app:hover{transform:translateY(-1px);}
+.btn-danger-app{background:linear-gradient(135deg,var(--accent4),#c02040);color:#fff;}
+.btn-danger-app:hover{transform:translateY(-1px);}
+.btn-plage-app{background:linear-gradient(135deg,#ff9f43,#e07b20);color:#fff;box-shadow:0 2px 8px rgba(255,159,67,.25);}
+.btn-plage-app:hover{transform:translateY(-1px);}
+.btn-team-app{background:linear-gradient(135deg,#7c5cbf,#5a3fa0);color:#fff;box-shadow:0 2px 8px rgba(124,92,191,.25);}
+.btn-team-app:hover{transform:translateY(-1px);}
+.btn-refresh-app{background:linear-gradient(135deg,#20b2aa,#178f88);color:#fff;box-shadow:0 2px 8px rgba(32,178,170,.25);}
+.btn-refresh-app:hover{transform:translateY(-1px);}
+/* LOCK */
+.lock-badge{display:inline-flex;align-items:center;gap:5px;font-size:0.76rem;font-weight:600;padding:5px 9px;border-radius:8px;cursor:pointer;}
+.lock-badge.locked{background:#fff3e0;color:#b85c00;border:1.5px solid #f8d8a0;}
+.lock-badge.unlocked{background:#e8f0ff;color:#3355cc;border:1.5px solid #c0d0f8;}
+/* WEEK BAR */
+.week-bar{background:var(--surface);border-bottom:1.5px solid var(--border);padding:8px 20px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.week-label{font-weight:600;font-size:0.9rem;color:var(--text);}
+.week-nav{display:flex;align-items:center;gap:5px;}
+.btn-week{width:30px;height:30px;border:1.5px solid var(--border);background:var(--surface2);border-radius:7px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;color:var(--text);font-size:0.9rem;}
+.btn-week:hover{background:var(--accent);color:#fff;border-color:var(--accent);}
+.week-display{font-family:'DM Mono',monospace;font-size:0.82rem;color:var(--text2);font-weight:500;min-width:140px;text-align:center;}
+.history-select{font-family:'Outfit',sans-serif;font-size:0.8rem;padding:5px 9px;border-radius:8px;border:1.5px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;outline:none;max-width:220px;}
+.history-select:focus{border-color:var(--accent);}
+/* LAYOUT */
+.app-body{display:flex;min-height:calc(100vh - 108px);}
+.sidebar{width:268px;min-width:220px;background:var(--surface);border-right:1.5px solid var(--border);padding:16px 12px;display:flex;flex-direction:column;gap:16px;overflow-y:auto;}
+.main-content{flex:1;padding:16px;overflow-x:auto;}
+/* SIDEBAR */
+.sidebar-title{font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--text2);margin-bottom:8px;padding:0 2px;display:flex;align-items:center;justify-content:space-between;}
+.sidebar-title-action{font-size:0.68rem;font-weight:600;color:var(--accent);cursor:pointer;text-transform:none;letter-spacing:0;}
+.sidebar-title-action:hover{text-decoration:underline;}
+/* AGENTS */
+.agent-item-wrap{border-radius:10px;padding:7px 9px;transition:background .15s;border:1.5px solid transparent;margin-bottom:4px;}
+.agent-item-wrap:hover{background:var(--surface2);}
+.agent-item-top{display:flex;align-items:center;gap:7px;margin-bottom:5px;}
+.agent-avatar{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.7rem;color:#fff;flex-shrink:0;}
+.agent-info{flex:1;min-width:0;}
+.agent-name{font-weight:500;font-size:0.86rem;}
+.agent-dyn-badge{font-size:0.6rem;font-weight:700;padding:1px 4px;border-radius:4px;display:inline-block;margin-top:1px;}
+.dyn-ok{background:#e8faf4;color:#1a9e74;}
+.dyn-warn{background:#fff3e0;color:#b85c00;}
+.dyn-over{background:#fff0f2;color:#c0293c;}
+.agent-check{width:16px;height:16px;accent-color:var(--accent);cursor:pointer;flex-shrink:0;}
+.agent-fully-absent .agent-avatar{opacity:.35;}
+.agent-fully-absent .agent-name{color:var(--text2);text-decoration:line-through;}
+.agent-partial-badge{font-size:0.57rem;font-weight:700;background:#fff3e0;color:#b85c00;border-radius:4px;padding:1px 4px;}
+.agent-days-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:3px;padding:0 2px;}
+.day-check-cell{display:flex;flex-direction:column;align-items:center;gap:2px;background:var(--surface2);border-radius:6px;padding:3px 1px;border:1.5px solid var(--border);transition:all .15s;cursor:pointer;}
+.day-check-cell:hover{border-color:var(--accent);background:#eef0ff;}
+.day-check-cell.day-absent{background:#f0f0f8;border-color:#d8d8e8;}
+.day-check-cell.day-present{background:#e8faf4;border-color:#a8ecd4;}
+.day-check-cell.day-ferie{background:#fff3e0;border-color:#f8d090;cursor:not-allowed;}
+.day-check-lbl{font-size:0.5rem;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.03em;line-height:1;}
+.day-check-box{width:14px;height:14px;accent-color:var(--accent);cursor:pointer;margin:0;}
+.workload-bar-wrap{padding:0 2px;margin-top:4px;}
+.workload-bar-bg{height:4px;background:var(--border);border-radius:3px;overflow:hidden;}
+.workload-bar-fill{height:100%;border-radius:3px;transition:width .4s;}
+.workload-label{font-size:0.6rem;color:var(--text2);margin-top:1px;}
+/* JOURS FERIES */
+.ferie-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;}
+.ferie-cell{display:flex;flex-direction:column;align-items:center;gap:2px;background:var(--surface2);border-radius:7px;padding:5px 2px;border:1.5px solid var(--border);cursor:pointer;transition:all .15s;}
+.ferie-cell:hover{border-color:#f5a623;}
+.ferie-cell.is-ferie{background:#fff3e0;border-color:#f8c060;box-shadow:0 0 0 2px #ffe08040;}
+.ferie-lbl{font-size:0.58rem;font-weight:700;color:var(--text2);text-transform:uppercase;}
+.ferie-icon{font-size:0.9rem;}
+.ferie-check{width:13px;height:13px;accent-color:#f5a623;cursor:pointer;}
+/* DASHBOARD */
+.dash-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+.dash-card{background:var(--surface2);border-radius:9px;padding:8px;text-align:center;}
+.dash-val{font-size:1.3rem;font-weight:700;line-height:1;margin-bottom:2px;}
+.dash-lbl{font-size:0.63rem;color:var(--text2);font-weight:500;}
+.dash-val.accent{color:var(--accent);}
+.dash-val.green{color:var(--accent2);}
+.dash-val.orange{color:var(--accent3);}
+.dash-val.red{color:var(--accent4);}
+/* STATUS */
+.status-badge{display:flex;align-items:center;gap:7px;padding:8px 10px;border-radius:9px;font-size:0.78rem;font-weight:600;}
+.status-ok{background:#e8faf4;color:#1a9e74;border:1.5px solid #b0f0dd;}
+.status-err{background:#fff0f2;color:#c0293c;border:1.5px solid #ffc0c8;}
+.status-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.status-dot-ok{background:var(--accent2);box-shadow:0 0 0 3px #b0f0dd;}
+.status-dot-err{background:var(--accent4);box-shadow:0 0 0 3px #ffc0c8;}
+.error-list{margin-top:6px;display:flex;flex-direction:column;gap:3px;}
+.error-item{font-size:0.7rem;color:#c0293c;padding:4px 7px;background:#fff0f2;border-radius:6px;border-left:3px solid var(--accent4);}
+/* LEGEND */
+.legend-grid{display:flex;flex-wrap:wrap;gap:4px;}
+.legend-item{display:flex;align-items:center;gap:4px;font-size:0.68rem;font-weight:500;color:var(--text);}
+.legend-dot{width:8px;height:8px;border-radius:3px;flex-shrink:0;}
+/* PLANNING TABLE */
+.planning-wrapper{overflow-x:auto;}
+.planning-table{border-collapse:separate;border-spacing:0;width:100%;min-width:800px;}
+.planning-table thead th{background:var(--surface);border:1.5px solid var(--border);padding:8px 6px;font-size:0.76rem;font-weight:700;text-align:center;color:var(--text2);text-transform:uppercase;letter-spacing:.05em;position:sticky;top:0;z-index:10;}
+.planning-table thead th.day-header{background:var(--surface2);color:var(--text);font-size:0.78rem;}
+.planning-table thead th.day-ferie-header{background:#fff3e0;color:#b85c00;}
+.planning-table tbody td{border:1px solid var(--border);vertical-align:top;padding:5px;min-width:120px;background:var(--surface);}
+.planning-table tbody td.ferie-day-col{background:repeating-linear-gradient(45deg,#fff8f0,#fff8f0 6px,#fff0e0 6px,#fff0e0 12px)!important;}
+.slot-container{min-height:60px;display:flex;flex-direction:column;gap:3px;}
+/* ACTIVITY CARDS */
+.activity-card{border-radius:7px;padding:4px 7px;font-size:0.74rem;font-weight:600;cursor:grab;display:flex;align-items:center;justify-content:space-between;gap:3px;transition:all .18s;border:1.5px solid transparent;user-select:none;box-shadow:0 1px 3px rgba(0,0,0,.06);position:relative;}
+.activity-card:hover{transform:translateY(-1px);box-shadow:0 3px 10px rgba(0,0,0,.1);}
+.activity-card.sortable-drag{opacity:.35;}
+.activity-card.sortable-ghost{border:2px dashed var(--accent);background:#eef0ff!important;opacity:.5;}
+.card-left{display:flex;align-items:center;gap:5px;}
+.card-agent-dot{width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.55rem;font-weight:700;color:#fff;flex-shrink:0;}
+.card-act{font-weight:700;font-size:0.72rem;line-height:1.2;}
+.card-agent{font-size:0.64rem;opacity:.75;}
+.card-right{display:flex;align-items:center;gap:2px;flex-shrink:0;}
+.act-fixed-drag{cursor:grab!important;}
+.lock-icon{font-size:0.65rem;opacity:.45;}
+.note-btn{width:17px;height:17px;border-radius:4px;border:1.5px solid rgba(0,0,0,.13);background:rgba(255,255,255,.55);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:0.6rem;transition:all .15s;flex-shrink:0;}
+.note-btn:hover{background:rgba(255,255,255,.9);}
+.note-btn.has-note{background:#fff9c4;border-color:#f0c040;}
+.del-card-btn{width:17px;height:17px;border-radius:4px;border:none;background:rgba(0,0,0,.08);color:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:0.6rem;transition:background .15s;flex-shrink:0;opacity:.65;}
+.del-card-btn:hover{background:rgba(192,0,0,.2);opacity:1;}
+.edit-card-btn{width:17px;height:17px;border-radius:4px;border:none;background:rgba(0,0,0,.08);color:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:0.6rem;transition:background .15s;flex-shrink:0;opacity:.65;}
+.edit-card-btn:hover{background:rgba(90,103,242,.2);opacity:1;}
+.note-tooltip{position:absolute;bottom:calc(100% + 4px);left:0;right:0;background:#1a1d2e;color:#fff;font-size:0.68rem;font-weight:400;padding:5px 7px;border-radius:7px;z-index:50;pointer-events:none;white-space:pre-wrap;max-width:200px;box-shadow:var(--shadow-md);display:none;line-height:1.4;}
+.activity-card:hover .note-tooltip{display:block;}
+.fixed-badge{font-size:0.56rem;background:rgba(0,0,0,.09);border-radius:3px;padding:1px 3px;font-weight:500;}
+/* PLAGE */
+.plage-card{border-radius:8px;padding:6px 8px;font-size:0.74rem;cursor:grab;border:2px dashed #ff9f43;background:linear-gradient(135deg,#fff8f0,#fff3e8);box-shadow:0 2px 8px rgba(255,159,67,.15);user-select:none;transition:all .18s;position:relative;}
+.plage-card:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(255,159,67,.25);}
+.plage-card.sortable-ghost{border:2px dashed #ff9f43;background:#fff8f0!important;opacity:.5;}
+.plage-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:3px;}
+.plage-title{font-weight:700;color:#c06020;font-size:0.7rem;display:flex;align-items:center;gap:3px;}
+.plage-comment{font-size:0.7rem;color:#a05010;line-height:1.3;word-break:break-word;}
+.plage-del{width:15px;height:15px;border-radius:3px;border:none;background:rgba(192,96,32,.13);color:#c06020;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:0.62rem;transition:background .15s;}
+.plage-del:hover{background:rgba(192,96,32,.28);}
+.plage-edit{width:15px;height:15px;border-radius:3px;border:none;background:rgba(192,96,32,.13);color:#c06020;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:0.62rem;transition:background .15s;}
+.plage-edit:hover{background:rgba(192,96,32,.28);}
+.add-plage-btn{width:100%;margin-top:3px;padding:3px 5px;border-radius:6px;border:1.5px dashed #ffcc99;background:transparent;color:#ff9f43;font-size:0.67rem;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:3px;transition:all .15s;font-family:'Outfit',sans-serif;}
+.add-plage-btn:hover{background:#fff8f0;border-color:#ff9f43;}
+.add-block-btn{width:100%;margin-top:3px;padding:3px 5px;border-radius:6px;border:1.5px dashed var(--border);background:transparent;color:var(--accent);font-size:0.67rem;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:3px;transition:all .15s;font-family:'Outfit',sans-serif;}
+.add-block-btn:hover{background:#eef0ff;border-color:var(--accent);}
+/* ABSENT */
+.absent-cell{background:repeating-linear-gradient(45deg,#f4f4f8,#f4f4f8 5px,#e8e8f0 5px,#e8e8f0 10px)!important;}
+/* PLAGE-BLOCKED indicator */
+.plage-blocked-tag{font-size:0.58rem;font-weight:700;background:#ffe0e0;color:#c03020;border-radius:4px;padding:1px 4px;border:1px solid #ffc0b0;}
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(26,29,46,.45);z-index:1000;display:flex;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(3px);}
+.modal-box{background:var(--surface);border-radius:14px;padding:22px;width:100%;max-width:420px;box-shadow:var(--shadow-md);max-height:90vh;overflow-y:auto;}
+.modal-box-lg{max-width:500px;}
+.modal-title{font-weight:700;font-size:0.95rem;margin-bottom:14px;display:flex;align-items:center;gap:7px;}
+.modal-label{font-size:0.78rem;font-weight:600;color:var(--text2);margin-bottom:4px;display:block;}
+.modal-textarea{width:100%;border:1.5px solid var(--border);border-radius:9px;padding:9px 11px;font-family:'Outfit',sans-serif;font-size:0.86rem;resize:vertical;min-height:80px;outline:none;color:var(--text);background:var(--surface2);transition:border-color .15s;}
+.modal-textarea:focus{border-color:var(--accent);}
+.modal-input{width:100%;border:1.5px solid var(--border);border-radius:9px;padding:8px 11px;font-family:'Outfit',sans-serif;font-size:0.86rem;outline:none;color:var(--text);background:var(--surface2);transition:border-color .15s;margin-bottom:9px;}
+.modal-input:focus{border-color:var(--accent);}
+.modal-actions{display:flex;gap:7px;justify-content:flex-end;margin-top:12px;}
+/* PLAGE BLOCKED AGENTS */
+.plage-agents-list{display:flex;flex-direction:column;gap:5px;margin-bottom:9px;}
+.plage-agent-check-row{display:flex;align-items:center;gap:8px;padding:6px 9px;border-radius:8px;background:var(--surface2);border:1.5px solid var(--border);cursor:pointer;transition:all .15s;}
+.plage-agent-check-row:hover{border-color:var(--accent);background:#eef0ff;}
+.plage-agent-check-row.is-blocked{background:#fff0f2;border-color:#ffc0c8;}
+.plage-agent-check-row input[type=checkbox]{accent-color:var(--accent4);width:15px;height:15px;cursor:pointer;}
+.plage-agent-dot{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.6rem;font-weight:700;color:#fff;flex-shrink:0;}
+.plage-agent-name{font-size:0.82rem;font-weight:500;flex:1;}
+.plage-blocked-label{font-size:0.65rem;color:#c0293c;font-weight:600;}
+/* HISTORY MANAGEMENT */
+.history-entry{display:flex;align-items:center;gap:6px;padding:7px 9px;border-radius:9px;background:var(--surface2);margin-bottom:4px;font-size:0.78rem;border:1.5px solid transparent;transition:background .15s;}
+.history-entry:hover{background:var(--border);}
+.history-entry-week{font-weight:600;color:var(--text);flex:1;cursor:pointer;}
+.history-entry-date{font-size:0.66rem;color:var(--text2);cursor:pointer;}
+.history-entry-check{width:15px;height:15px;accent-color:var(--accent);cursor:pointer;flex-shrink:0;}
+.history-del{background:none;border:none;color:var(--text2);cursor:pointer;font-size:0.8rem;padding:2px 4px;border-radius:4px;flex-shrink:0;}
+.history-del:hover{background:var(--accent4);color:#fff;}
+/* TEAM */
+.team-agent-row{display:flex;align-items:center;gap:7px;padding:7px 9px;border-radius:9px;border:1.5px solid var(--border);margin-bottom:6px;background:var(--surface2);}
+.team-agent-color{width:26px;height:26px;border-radius:50%;flex-shrink:0;border:2px solid rgba(255,255,255,.6);cursor:pointer;position:relative;}
+.team-agent-color input[type=color]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+.team-agent-input{flex:1;border:1.5px solid var(--border);border-radius:8px;padding:6px 9px;font-family:'Outfit',sans-serif;font-size:0.84rem;outline:none;background:var(--surface);color:var(--text);transition:border-color .15s;}
+.team-agent-input:focus{border-color:var(--accent);}
+.team-del-btn{width:26px;height:26px;border-radius:6px;border:none;background:#fff0f2;color:#c0293c;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:0.8rem;flex-shrink:0;transition:background .15s;}
+.team-del-btn:hover{background:#ffc0c8;}
+.team-del-btn:disabled{opacity:.3;cursor:not-allowed;}
+.add-agent-btn{width:100%;padding:7px;border-radius:8px;border:2px dashed var(--border);background:transparent;color:var(--accent);font-family:'Outfit',sans-serif;font-size:0.8rem;font-weight:600;cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:5px;margin-top:3px;}
+.add-agent-btn:hover{background:#eef0ff;border-color:var(--accent);}
+.team-warning{font-size:0.72rem;color:#b85c00;background:#fff3e0;border:1.5px solid #f8d8a0;border-radius:7px;padding:6px 9px;margin-bottom:10px;line-height:1.4;}
+/* EDIT BLOCK MODAL */
+.act-colors{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-top:4px;}
+/* TOAST */
+.toast-container-app{position:fixed;bottom:18px;right:18px;z-index:9999;display:flex;flex-direction:column;gap:7px;pointer-events:none;}
+.app-toast{background:var(--text);color:#fff;padding:9px 14px;border-radius:9px;font-size:0.82rem;font-weight:500;box-shadow:var(--shadow-md);animation:toastIn .3s ease,toastOut .3s ease 2.7s forwards;pointer-events:none;}
+@keyframes toastIn{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+@keyframes toastOut{to{opacity:0;transform:translateY(8px)}}
+/* ACTIVITY COLORS */
+.act-ap{background:#e8f0ff;color:#3355cc;border-color:#c0d0f8;}
+.act-dyn{background:#fff3e0;color:#b85c00;border-color:#f8d8a0;}
+.act-cvm{background:#fce8ff;color:#8833bb;border-color:#e8b8f8;}
+.act-dossier{background:#e8faf4;color:#1a7a58;border-color:#a8ecd4;}
+.act-corner{background:#fff8e1;color:#886600;border-color:#f8e4a0;}
+.act-visio{background:#e8f4ff;color:#1155aa;border-color:#a8d4f8;}
+.act-bo{background:#f0f0ff;color:#5533aa;border-color:#d0c8f8;}
+.act-seg{background:#e8fff4;color:#007755;border-color:#a8f0d0;}
+.act-colvision{background:#fff0f8;color:#aa2266;border-color:#f8c0e0;}
+.act-colphys{background:#fff8f0;color:#aa5500;border-color:#f8d8b0;}
+.act-libre{background:#f8f8f8;color:#555;border-color:#ddd;}
+.act-collab{background:#f5eef8;color:#7d3c98;border-color:#d7bde2;}
+
+/* ADMIN / RULES */
+.btn-admin-app{background:linear-gradient(135deg,#444,#222);color:#fff;}
+.btn-admin-app:hover{transform:translateY(-1px);}
+.rule-row{display:flex;align-items:center;gap:7px;padding:7px 9px;border-radius:9px;border:1.5px solid var(--border);margin-bottom:6px;background:var(--surface2);flex-wrap:wrap;}
+.rule-row.rule-disabled{opacity:.45;}
+.rule-toggle{width:16px;height:16px;accent-color:var(--accent);cursor:pointer;flex-shrink:0;}
+.rule-info{flex:1;min-width:0;}
+.rule-name{font-size:.82rem;font-weight:600;color:var(--text);}
+.rule-detail{font-size:.7rem;color:var(--text2);margin-top:1px;}
+.rule-del{background:none;border:none;color:#c0293c;cursor:pointer;font-size:.85rem;padding:2px 5px;border-radius:5px;flex-shrink:0;}
+.rule-del:hover{background:#fff0f2;}
+.rule-edit-btn{background:none;border:none;color:var(--accent);cursor:pointer;font-size:.85rem;padding:2px 5px;border-radius:5px;flex-shrink:0;}
+.rule-edit-btn:hover{background:#eef0ff;}
+.modal-box-xl{max-width:600px;}
+.admin-tabs{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px;}
+.admin-tab-btn{font-family:'Outfit',sans-serif;font-size:.78rem;font-weight:600;padding:6px 12px;border-radius:8px;border:1.5px solid var(--border);background:var(--surface2);cursor:pointer;transition:all .15s;color:var(--text);}
+.admin-tab-btn.active{background:var(--accent);color:#fff;border-color:var(--accent);}
+.activities-list{display:flex;flex-direction:column;gap:5px;max-height:340px;overflow-y:auto;margin-bottom:10px;}
+.activity-manage-row{display:flex;align-items:center;gap:7px;padding:6px 9px;border-radius:8px;border:1.5px solid var(--border);background:var(--surface2);}
+.activity-manage-dot{width:12px;height:12px;border-radius:3px;flex-shrink:0;}
+.activity-manage-name{flex:1;font-size:.82rem;font-weight:500;color:var(--text);}
+.activity-manage-del{background:none;border:none;color:#c0293c;cursor:pointer;font-size:.82rem;padding:2px 5px;border-radius:4px;}
+.activity-manage-del:hover{background:#fff0f2;}
+/* WIZARD */
+.wizard-step{display:none;}
+.wizard-step.active{display:block;}
+.wizard-header{text-align:center;margin-bottom:18px;}
+.wizard-icon{font-size:2.5rem;display:block;margin-bottom:8px;}
+.wizard-title{font-size:1.1rem;font-weight:700;color:var(--text);}
+.wizard-sub{font-size:.82rem;color:var(--text2);margin-top:4px;line-height:1.5;}
+.wizard-progress{display:flex;gap:5px;justify-content:center;margin-bottom:18px;}
+.wizard-dot{width:8px;height:8px;border-radius:50%;background:var(--border);transition:background .3s;}
+.wizard-dot.active{background:var(--accent);}
+.wizard-dot.done{background:var(--accent2);}
+/* WEEKEND BANNER */
+.weekend-banner{background:linear-gradient(90deg,#ff9f43,#f5a623);color:#fff;text-align:center;padding:7px 40px;font-weight:600;font-size:.85rem;display:flex;align-items:center;justify-content:center;gap:8px;position:relative;}
+.banner-close{position:absolute;right:14px;background:none;border:none;color:#fff;font-size:1rem;cursor:pointer;line-height:1;}
+/* TOAST SPECIAL */
+.app-toast.toast-special{background:linear-gradient(135deg,var(--accent),var(--accent2));}
+
+@media(max-width:700px){
+  .app-body{flex-direction:column;}
+  .sidebar{width:100%;border-right:none;border-bottom:1.5px solid var(--border);}
+  .app-header{padding:0 10px;}
+  .btn-label{display:none;}
+}
+</style>
+</head>
+<body>
+
+<div id="weekendBanner" style="display:none;" class="weekend-banner">
+  🎉 C'est bientôt le week-end — plus que quelques heures, vous l'avez mérité !
+  <button class="banner-close" onclick="document.getElementById('weekendBanner').style.display='none'">✕</button>
+</div>
+<div class="app-header">
+  <div class="app-logo" id="appLogo" title="Clic ×5: citation | Clic ×7: arc-en-ciel">
+    <div class="logo-icon">📅</div>
+    <span class="app-title-text" id="headerTitle">Planning Équipe Essentiel</span>
+  </div>
+  <div class="header-actions">
+    <div id="lockBadge" class="lock-badge unlocked" onclick="toggleLock()">🔓 <span id="lockLabel">Non verrouillé</span></div>
+    <button class="btn-app btn-team-app" onclick="openTeamModal()"><span>👥</span><span class="btn-label">Équipe</span></button>
+    <button class="btn-app btn-plage-app" onclick="openAddPlageModal()"><span>🚧</span><span class="btn-label">Plage</span></button>
+    <button class="btn-app btn-refresh-app" onclick="refreshPlanning()"><span>🔄</span><span class="btn-label">Actualiser</span></button>
+    <button class="btn-app btn-primary-app" onclick="generatePlanning()"><span>⚡</span><span class="btn-label">Générer</span></button>
+    <button class="btn-app btn-success-app" onclick="exportPDF()"><span>📄</span><span class="btn-label">PDF</span></button>
+    <button class="btn-app btn-admin-app" onclick="openAdminModal()"><span>⚙️</span><span class="btn-label">Admin</span></button>
+  </div>
+</div>
+
+<div class="week-bar">
+  <div class="week-label">Semaine</div>
+  <div class="week-nav">
+    <button class="btn-week" onclick="changeWeek(-1)">‹</button>
+    <div class="week-display" id="weekDisplay">—</div>
+    <button class="btn-week" onclick="changeWeek(1)">›</button>
+  </div>
+  <button class="btn-app btn-secondary-app" style="font-size:0.76rem;padding:5px 10px;" onclick="goToCurrentWeek()">Semaine actuelle</button>
+  <select class="history-select" id="historySelect" onchange="loadFromHistory(this.value)">
+    <option value="">📂 Historique…</option>
+  </select>
+  <button class="btn-app btn-secondary-app" style="font-size:0.76rem;padding:5px 10px;" onclick="openHistoryModal()">🗂 Gérer historique</button>
+</div>
+
+<div class="app-body">
+  <div class="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-title">Agents <span class="sidebar-title-action" onclick="toggleAllAgents()">Tout basculer</span></div>
+      <div id="agentList"></div>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-title">Jours fériés</div>
+      <div class="ferie-grid" id="ferieGrid"></div>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-title">Dashboard</div>
+      <div class="dash-grid">
+        <div class="dash-card"><div class="dash-val accent" id="d-present">5</div><div class="dash-lbl">Présents</div></div>
+        <div class="dash-card"><div class="dash-val green" id="d-covered">0</div><div class="dash-lbl">Couvertes</div></div>
+        <div class="dash-card"><div class="dash-val orange" id="d-uncovered">0</div><div class="dash-lbl">Non couv.</div></div>
+        <div class="dash-card"><div class="dash-val green" id="d-rate">0%</div><div class="dash-lbl">Couverture</div></div>
+      </div>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-title">Conformité</div>
+      <div id="statusZone"></div>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-title">Légende</div>
+      <div class="legend-grid" id="legendGrid"></div>
+      <div class="legend-item" style="margin-top:5px;"><div class="legend-dot" style="background:#ff9f43;border:1.5px dashed #ff9f43;"></div><span>Plage contrainte</span></div>
+    </div>
+  </div>
+
+  <div class="main-content">
+    <div class="planning-wrapper" id="planningArea">
+      <div id="planningTable"></div>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container-app" id="toastContainer"></div>
+
+<!-- MODAL NOTE -->
+<div class="modal-overlay" id="modalNote" style="display:none;">
+  <div class="modal-box">
+    <div class="modal-title">💬 Note – <span id="noteAgentName"></span></div>
+    <label class="modal-label">Commentaire</label>
+    <textarea class="modal-textarea" id="noteText" placeholder="ex: Départ à 16h, télétravail…"></textarea>
+    <div class="modal-actions">
+      <button class="btn-app btn-secondary-app" onclick="closeModal('modalNote')">Annuler</button>
+      <button class="btn-app btn-primary-app" onclick="saveNote()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL EDIT BLOCK -->
+<div class="modal-overlay" id="modalEditBlock" style="display:none;">
+  <div class="modal-box">
+    <div class="modal-title">✏️ Modifier le bloc</div>
+    <label class="modal-label">Agent</label>
+    <select class="modal-input" id="editBlockAgent"></select>
+    <label class="modal-label">Activité</label>
+    <select class="modal-input" id="editBlockActivity">
+      <option value="A&P">A&P</option>
+      <option value="DYN / MER">DYN / MER</option>
+      <option value="CVM">CVM</option>
+      <option value="Dossier transversal">Dossier transversal</option>
+      <option value="Corner Essentiel">Corner Essentiel</option>
+      <option value="Permanence Visio">Permanence Visio</option>
+      <option value="Back Office">Back Office</option>
+      <option value="Segmentation travail d'équipe">Segmentation travail d'équipe</option>
+      <option value="Collectif Visio">Collectif Visio</option>
+      <option value="Collectif Physique">Collectif Physique</option>
+      <option value="Libre">Libre</option>
+    </select>
+    <input type="hidden" id="editBlockDay"/>
+    <input type="hidden" id="editBlockSlot"/>
+    <input type="hidden" id="editBlockIdx"/>
+    <div class="modal-actions">
+      <button class="btn-app btn-secondary-app" onclick="closeModal('modalEditBlock')">Annuler</button>
+      <button class="btn-app btn-primary-app" onclick="saveEditBlock()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL ADD BLOCK -->
+<div class="modal-overlay" id="modalAddBlock" style="display:none;">
+  <div class="modal-box">
+    <div class="modal-title">➕ Ajouter un bloc</div>
+    <label class="modal-label">Agent</label>
+    <select class="modal-input" id="blockAgent"></select>
+    <label class="modal-label">Activité</label>
+    <select class="modal-input" id="blockActivity">
+      <option value="A&P">A&P</option>
+      <option value="DYN / MER">DYN / MER</option>
+      <option value="CVM">CVM</option>
+      <option value="Dossier transversal">Dossier transversal</option>
+      <option value="Corner Essentiel">Corner Essentiel</option>
+      <option value="Permanence Visio">Permanence Visio</option>
+      <option value="Back Office">Back Office</option>
+      <option value="Segmentation travail d'équipe">Segmentation travail d'équipe</option>
+      <option value="Collectif Visio">Collectif Visio</option>
+      <option value="Collectif Physique">Collectif Physique</option>
+      <option value="Libre">Libre</option>
+    </select>
+    <input type="hidden" id="blockDay"/>
+    <input type="hidden" id="blockSlot"/>
+    <div class="modal-actions">
+      <button class="btn-app btn-secondary-app" onclick="closeModal('modalAddBlock')">Annuler</button>
+      <button class="btn-app btn-primary-app" onclick="saveBlock()">Ajouter</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL PLAGE ADD -->
+<div class="modal-overlay" id="modalPlage" style="display:none;">
+  <div class="modal-box">
+    <div class="modal-title">🚧 Plage contrainte</div>
+    <label class="modal-label">Jour</label>
+    <select class="modal-input" id="plageDay">
+      <option value="Lundi">Lundi</option><option value="Mardi">Mardi</option>
+      <option value="Mercredi">Mercredi</option><option value="Jeudi">Jeudi</option>
+      <option value="Vendredi">Vendredi</option>
+    </select>
+    <label class="modal-label">Créneau</label>
+    <select class="modal-input" id="plageSlot">
+      <option value="Matin">Matin</option><option value="Après-midi">Après-midi</option>
+    </select>
+    <label class="modal-label">Titre</label>
+    <input class="modal-input" type="text" id="plageTitre" placeholder="ex: Réunion DRH, Formation…"/>
+    <label class="modal-label">Commentaire (optionnel)</label>
+    <textarea class="modal-textarea" id="plageComment" placeholder="Détails…" style="min-height:55px;margin-bottom:9px;"></textarea>
+    <label class="modal-label">Agents bloqués pendant cette plage <span style="font-size:0.68rem;color:var(--text2);font-weight:400;">(cocher = ne peut pas faire son activité normale)</span></label>
+    <div class="plage-agents-list" id="plageAgentsList"></div>
+    <div class="modal-actions">
+      <button class="btn-app btn-secondary-app" onclick="closeModal('modalPlage')">Annuler</button>
+      <button class="btn-app btn-plage-app" onclick="savePlage()">Ajouter</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL PLAGE EDIT -->
+<div class="modal-overlay" id="modalPlageEdit" style="display:none;">
+  <div class="modal-box">
+    <div class="modal-title">✏️ Modifier la plage</div>
+    <label class="modal-label">Agent concerné (info)</label>
+    <select class="modal-input" id="plageEditAgent">
+      <option value="">— Toute l'équipe —</option>
+    </select>
+    <label class="modal-label">Titre</label>
+    <input class="modal-input" type="text" id="plageEditTitre"/>
+    <label class="modal-label">Commentaire</label>
+    <textarea class="modal-textarea" id="plageEditComment" style="min-height:55px;margin-bottom:9px;"></textarea>
+    <label class="modal-label">Agents bloqués</label>
+    <div class="plage-agents-list" id="plageEditAgentsList"></div>
+    <input type="hidden" id="plageEditDay"/>
+    <input type="hidden" id="plageEditSlot"/>
+    <input type="hidden" id="plageEditIdx"/>
+    <div class="modal-actions">
+      <button class="btn-app btn-secondary-app" onclick="closeModal('modalPlageEdit')">Annuler</button>
+      <button class="btn-app btn-plage-app" onclick="savePlageEdit()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL TEAM -->
+<div class="modal-overlay" id="modalTeam" style="display:none;">
+  <div class="modal-box modal-box-lg">
+    <div class="modal-title">👥 Gérer l'équipe</div>
+    <div class="team-warning">⚠️ Renommer ou supprimer un agent met à jour la semaine en cours. L'historique des autres semaines n'est pas modifié.</div>
+    <div id="teamAgentRows"></div>
+    <button class="add-agent-btn" onclick="addAgentRow()">＋ Ajouter un agent</button>
+    <div class="modal-actions" style="margin-top:16px;">
+      <button class="btn-app btn-secondary-app" onclick="closeModal('modalTeam')">Annuler</button>
+      <button class="btn-app btn-primary-app" onclick="saveTeam()">✓ Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL HISTORY -->
+<div class="modal-overlay" id="modalHistory" style="display:none;">
+  <div class="modal-box modal-box-lg">
+    <div class="modal-title">🗂 Gérer l'historique</div>
+    <div style="display:flex;gap:7px;margin-bottom:12px;flex-wrap:wrap;">
+      <button class="btn-app btn-secondary-app" onclick="selectAllHistory(true)">Tout sélectionner</button>
+      <button class="btn-app btn-secondary-app" onclick="selectAllHistory(false)">Tout désélectionner</button>
+      <button class="btn-app btn-danger-app" onclick="deleteSelectedHistory()">🗑 Supprimer sélection</button>
+      <button class="btn-app btn-danger-app" onclick="deleteAllHistory()">🗑 Vider l'historique</button>
+    </div>
+    <div id="historyList" style="max-height:360px;overflow-y:auto;"></div>
+    <div class="modal-actions" style="margin-top:12px;">
+      <button class="btn-app btn-secondary-app" onclick="closeModal('modalHistory')">Fermer</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL TITLE -->
+<div class="modal-overlay" id="modalTitle" style="display:none;">
+  <div class="modal-box">
+    <div class="modal-title">✏️ Titre de l'application</div>
+    <label class="modal-label">Nom affiché dans l'onglet, les favoris et l'en-tête</label>
+    <input class="modal-input" type="text" id="titleInput" maxlength="60" placeholder="Planning Équipe Essentiel"/>
+    <div style="font-size:0.72rem;color:var(--text2);margin-top:-5px;margin-bottom:8px;">Ce titre est sauvegardé localement et persistera à chaque ouverture.</div>
+    <div class="modal-actions">
+      <button class="btn-app btn-secondary-app" onclick="closeModal('modalTitle')">Annuler</button>
+      <button class="btn-app btn-primary-app" onclick="saveAppTitle()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// CONSTANTS
+// ============================================================
+const AGENTS_DEFAULT=['Selim','Marvin','Michelle','Charlotte','Emilien'];
+const AGENT_COLORS_DEFAULT={Selim:'#5a67f2',Marvin:'#38c8a8',Michelle:'#f5a623',Charlotte:'#e8445a',Emilien:'#7c5cbf'};
+const COLOR_PALETTE=['#5a67f2','#38c8a8','#f5a623','#e8445a','#7c5cbf','#20b2aa','#e07b50','#3a9bd5','#c06080','#60a060'];
+const ACTIVITIES_DEFAULT=['A&P','DYN / MER','CVM','Dossier transversal','Corner Essentiel','Permanence Visio','Back Office',"Segmentation travail d'équipe",'Collectif Visio','Collectif Physique','Libre','Jeudi de la collab'];
+let ACTIVITIES=[...ACTIVITIES_DEFAULT];
+const ACT_CLASS={'A&P':'act-ap','DYN / MER':'act-dyn','CVM':'act-cvm','Dossier transversal':'act-dossier','Corner Essentiel':'act-corner','Permanence Visio':'act-visio','Back Office':'act-bo',"Segmentation travail d'équipe":'act-seg','Collectif Visio':'act-colvision','Collectif Physique':'act-colphys','Libre':'act-libre','Jeudi de la collab':'act-collab'};
+const ACT_COLORS_HEX={'A&P':'#3355cc','DYN / MER':'#b85c00','CVM':'#8833bb','Dossier transversal':'#1a7a58','Corner Essentiel':'#886600','Permanence Visio':'#1155aa','Back Office':'#5533aa',"Segmentation travail d'équipe":'#007755','Collectif Visio':'#aa2266','Collectif Physique':'#aa5500','Libre':'#555','Jeudi de la collab':'#9b59b6'};
+const DAYS=['Lundi','Mardi','Mercredi','Jeudi','Vendredi'];
+const SLOTS=['Matin','Après-midi'];
+const DEFAULT_TITLE='Planning Équipe Essentiel';
+
+// ============================================================
+// RÈGLES FIXES CONFIGURABLES
+// ============================================================
+const DEFAULT_RULES=[
+  {id:'r1',day:'Jeudi',slot:'Matin',activity:'Dossier transversal',agents:[],minAgents:0,desc:"Dossier transversal — toute l'équipe",enabled:true},
+  {id:'r2',day:'Mercredi',slot:'Après-midi',activity:"Segmentation travail d'équipe",agents:[],minAgents:0,desc:"Segmentation — toute l'équipe",enabled:true},
+  {id:'r3',day:'Vendredi',slot:'Après-midi',activity:'Libre',agents:[],minAgents:0,desc:"Plage libre — toute l'équipe",enabled:true},
+  {id:'r4',day:'Lundi',slot:'Matin',activity:'CVM',agents:[],minAgents:2,desc:'2 agents minimum en CVM le lundi matin',enabled:true},
+  {id:'r5',day:'Mardi',slot:'Matin',activity:'Permanence Visio',agents:[],minAgents:0,desc:"Permanence Visio — toute l'équipe le mardi matin",enabled:true},
+  {id:'r6',day:'Mardi',slot:'Après-midi',activity:'Permanence Visio',agents:[],minAgents:0,desc:"Permanence Visio — toute l'équipe le mardi après-midi",enabled:true},
+  {id:'r7',day:'Jeudi',slot:'Après-midi',activity:'Jeudi de la collab',agents:[],minAgents:0,desc:"Jeudi de la collab — toute l'équipe (non bloquant)",enabled:true,nonBlocking:true}
+];
+let fixedRules=DEFAULT_RULES.map(r=>({...r}));
+
+// ============================================================
+// EASTER EGGS STATE
+// ============================================================
+const EE_QUOTES=[
+  "🌟 Le travail d'équipe divise la tâche et multiplie le succès. — Emilien Cantone",
+  "💪 Ensemble, chaque défi devient une opportunité. — Emilien Cantone",
+  "🚀 Une équipe soudée est inarrêtable. — Emilien Cantone",
+  "✨ La bienveillance est le moteur de la performance. — Charlotte C",
+  "🎯 Chaque petit pas ensemble construit quelque chose de grand. — Selim E",
+  "🌈 La diversité des talents fait la force de l'équipe. — Emilien Cantone",
+  "🤝 Se réunir est un début, rester ensemble est un progrès. — Michelle L",
+  "💡 Les meilleures idées naissent de la collaboration. — Emilien Cantone",
+  "🌻 Prendre soin les uns des autres, c'est prendre soin du collectif. — Emilien Cantone",
+  "🎉 Chaque journée bien organisée est une victoire ! — Emilien Cantone",
+  "🚀 L'équipe Essentiel de Digne-les-Bains (04) a créé ce planning interactif inspiré du 5ème marqueur de l'essentiel : l'IA & le Numérique au service de l'humain",
+  "👋🏻 Jordan notre REA vous passe le bonjour !"
+];
+let logoClickCount=0,logoClickTimer=null,eeQuoteIdx=0;
+
+let AGENTS=[...AGENTS_DEFAULT];
+let AGENT_COLORS={...AGENT_COLORS_DEFAULT};
+
+// ============================================================
+// STATE
+// ============================================================
+let currentWeekOffset=0;
+let presence={};
+let planningData={};
+let plageData={}; // [day][slot]=[{titre,comment,agent,blockedAgents:[]}]
+let agentNotes={};
+let ferieData={}; // {Lundi:bool,...}
+let locked=false;
+let planningHistory={};
+let appTitle=DEFAULT_TITLE;
+let _noteTarget=null;
+
+function ensureActivityStyle(name,color){
+  if(ACT_CLASS[name])return;
+  const slug='act-custom-'+name.toLowerCase().replace(/[^a-z0-9]+/g,'-');
+  ACT_CLASS[name]=slug;
+  if(document.getElementById('style-'+slug))return;
+  const style=document.createElement('style');
+  style.id='style-'+slug;
+  style.textContent='.'+slug+'{background:'+color+'22;color:'+color+';border-color:'+color+'55;}';
+  document.head.appendChild(style);
+}
+
+function getWeekKey(offset){
+  const m=getMonday(offset);
+  return `${m.getFullYear()}-W${String(getWeekNumber(m)).padStart(2,'0')}`;
+}
+
+function initState(){
+  const savedTeam=localStorage.getItem('ft-team');
+  if(savedTeam){const t=JSON.parse(savedTeam);AGENTS=t.agents||[...AGENTS_DEFAULT];AGENT_COLORS=t.colors||{...AGENT_COLORS_DEFAULT};}
+  const savedRules=localStorage.getItem('ft-rules');
+  if(savedRules){try{fixedRules=JSON.parse(savedRules);}catch(e){fixedRules=DEFAULT_RULES.map(r=>({...r}));}}
+  const savedActivities=localStorage.getItem('ft-activities');
+  if(savedActivities){
+    try{ACTIVITIES=JSON.parse(savedActivities);}
+    catch(e){ACTIVITIES=[...ACTIVITIES_DEFAULT];}
+  }
+  const savedActivityColors=localStorage.getItem('ft-activity-colors');
+  if(savedActivityColors){
+    try{Object.assign(ACT_COLORS_HEX,JSON.parse(savedActivityColors));}catch(e){}
+  }
+  ACTIVITIES.forEach(a=>ensureActivityStyle(a,ACT_COLORS_HEX[a]||'#888'));
+
+  const sp=localStorage.getItem('ft-presence');
+  if(sp){
+    presence=JSON.parse(sp);
+    AGENTS.forEach(a=>{
+      if(typeof presence[a]==='boolean'){const v=presence[a];presence[a]={};DAYS.forEach(d=>presence[a][d]=v);}
+      else if(!presence[a]||typeof presence[a]!=='object'){presence[a]={};DAYS.forEach(d=>presence[a][d]=true);}
+      else{DAYS.forEach(d=>{if(presence[a][d]===undefined)presence[a][d]=true;});}
+    });
+  } else {
+    presence={};
+    AGENTS.forEach(a=>{presence[a]={};DAYS.forEach(d=>presence[a][d]=true);});
+  }
+
+  const sw=localStorage.getItem('ft-week');
+  currentWeekOffset=sw?parseInt(sw):0;
+  const hist=localStorage.getItem('ft-history');
+  planningHistory=hist?JSON.parse(hist):{};
+  const savedTitle=localStorage.getItem('ft-title');
+  appTitle=savedTitle||DEFAULT_TITLE;
+  loadWeekData(currentWeekOffset);
+}
+
+function loadWeekData(offset){
+  const key=getWeekKey(offset);
+  if(planningHistory[key]){
+    const w=planningHistory[key];
+    planningData=w.planningData||{};
+    plageData=w.plageData||{};
+    agentNotes=w.agentNotes||{};
+    ferieData=w.ferieData||{};
+    locked=!!w.locked;
+  } else {
+    planningData={};plageData={};agentNotes={};ferieData={};
+    locked=false;
+  }
+}
+
+function saveWeekData(){
+  const key=getWeekKey(currentWeekOffset);
+  planningHistory[key]={
+    planningData:JSON.parse(JSON.stringify(planningData)),
+    plageData:JSON.parse(JSON.stringify(plageData)),
+    agentNotes:JSON.parse(JSON.stringify(agentNotes)),
+    ferieData:JSON.parse(JSON.stringify(ferieData)),
+    locked,
+    presence:JSON.parse(JSON.stringify(presence)),
+    savedAt:new Date().toISOString(),
+    weekLabel:formatWeekDisplay(currentWeekOffset)
+  };
+  localStorage.setItem('ft-history',JSON.stringify(planningHistory));
+  localStorage.setItem('ft-presence',JSON.stringify(presence));
+  localStorage.setItem('ft-week',String(currentWeekOffset));
+  localStorage.setItem('ft-team',JSON.stringify({agents:AGENTS,colors:AGENT_COLORS}));
+  localStorage.setItem('ft-rules',JSON.stringify(fixedRules));
+  localStorage.setItem('ft-activities',JSON.stringify(ACTIVITIES));
+  localStorage.setItem('ft-activity-colors',JSON.stringify(ACT_COLORS_HEX));
+  localStorage.setItem('ft-title',appTitle);
+  updateHistorySelect();
+}
+
+function updateHistorySelect(){
+  const sel=document.getElementById('historySelect');
+  const keys=Object.keys(planningHistory).sort().reverse();
+  let html='<option value="">📂 Historique…</option>';
+  keys.forEach(k=>{
+    const w=planningHistory[k];
+    const label=w.weekLabel||k;
+    const d=w.savedAt?new Date(w.savedAt).toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'}):'';
+    html+=`<option value="${k}">${label}${d?' · '+d:''}</option>`;
+  });
+  sel.innerHTML=html;
+}
+
+// ============================================================
+// APP TITLE
+// ============================================================
+function applyTitle(t){
+  appTitle=t;
+  document.title=t;
+  document.getElementById('headerTitle').textContent=t;
+  const meta=document.querySelector('meta[name="application-name"]');
+  if(meta)meta.setAttribute('content',t);
+}
+function openTitleModal(){
+  document.getElementById('titleInput').value=appTitle;
+  document.getElementById('modalTitle').style.display='flex';
+  setTimeout(()=>document.getElementById('titleInput').focus(),80);
+}
+function saveAppTitle(){
+  const v=document.getElementById('titleInput').value.trim()||DEFAULT_TITLE;
+  applyTitle(v);
+  localStorage.setItem('ft-title',v);
+  closeModal('modalTitle');
+  showToast('✏️ Titre mis à jour');
+}
+
+// ============================================================
+// WEEK UTILS
+// ============================================================
+function getMonday(offset=0){
+  const now=new Date();const day=now.getDay();const diff=day===0?-6:1-day;
+  const m=new Date(now);m.setDate(now.getDate()+diff+offset*7);m.setHours(0,0,0,0);return m;
+}
+function formatWeekDisplay(offset){
+  const m=getMonday(offset);const f=new Date(m);f.setDate(m.getDate()+4);
+  const fmt=d=>d.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'});
+  return `S${getWeekNumber(m)} · ${fmt(m)} – ${fmt(f)} ${m.getFullYear()}`;
+}
+function getWeekNumber(d){
+  const date=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));
+  date.setUTCDate(date.getUTCDate()+4-(date.getUTCDay()||7));
+  const ys=new Date(Date.UTC(date.getUTCFullYear(),0,1));
+  return Math.ceil((((date-ys)/86400000)+1)/7);
+}
+function changeWeek(dir){saveWeekData();currentWeekOffset+=dir;loadWeekData(currentWeekOffset);updateWeekDisplay();updateLockUI();renderAll();}
+function goToCurrentWeek(){saveWeekData();currentWeekOffset=0;loadWeekData(0);updateWeekDisplay();updateLockUI();renderAll();}
+function updateWeekDisplay(){document.getElementById('weekDisplay').textContent=formatWeekDisplay(currentWeekOffset);}
+function loadFromHistory(key){
+  if(!key)return;
+  if(planningHistory[key]){
+    const w=planningHistory[key];
+    planningData=w.planningData||{};plageData=w.plageData||{};agentNotes=w.agentNotes||{};ferieData=w.ferieData||{};
+    locked=!!w.locked;
+    if(w.presence){
+      presence=w.presence;
+      AGENTS.forEach(a=>{
+        if(typeof presence[a]==='boolean'){const v=presence[a];presence[a]={};DAYS.forEach(d=>presence[a][d]=v);}
+        else if(!presence[a]){presence[a]={};DAYS.forEach(d=>presence[a][d]=true);}
+      });
+      renderAgents();
+    }
+    updateLockUI();renderAll();
+    showToast('📂 Semaine chargée');
+  }
+  document.getElementById('historySelect').value='';
+}
+
+// ============================================================
+// LOCK
+// ============================================================
+function toggleLock(){locked=!locked;saveWeekData();updateLockUI();renderPlanning();showToast(locked?'🔒 Verrouillé':'🔓 Déverrouillé');}
+function updateLockUI(){
+  const b=document.getElementById('lockBadge');const l=document.getElementById('lockLabel');
+  if(locked){b.className='lock-badge locked';l.textContent='Verrouillé';}
+  else{b.className='lock-badge unlocked';l.textContent='Non verrouillé';}
+}
+
+// ============================================================
+// PRESENCE HELPERS
+// ============================================================
+function getActiveAgents(){return AGENTS.filter(a=>DAYS.some(d=>presence[a]&&presence[a][d]));}
+function isAgentPresentOnDay(agent,day){return !!(presence[agent]&&presence[agent][day]);}
+function isAgentFullyAbsent(agent){return DAYS.every(d=>!presence[agent]||!presence[agent][d]);}
+function isAgentPartial(agent){const days=DAYS.filter(d=>presence[agent]&&presence[agent][d]);return days.length>0&&days.length<DAYS.length;}
+function isDayFerie(day){return !!(ferieData&&ferieData[day]);}
+function shuffle(arr){const a=[...arr];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+
+// ============================================================
+// FERIE MANAGEMENT
+// ============================================================
+function toggleFerie(day){
+  if(locked){showToast('🔒 Planning verrouillé');return;}
+  ferieData[day]=!ferieData[day];
+  saveWeekData();
+  renderFerieGrid();
+  renderPlanning();
+  showToast(ferieData[day]?`🏖 ${day} marqué férié`:`${day} retiré des fériés`);
+}
+function renderFerieGrid(){
+  const c=document.getElementById('ferieGrid');
+  let html='';
+  DAYS.forEach(d=>{
+    const isFerie=isDayFerie(d);
+    html+=`<div class="ferie-cell ${isFerie?'is-ferie':''}" onclick="toggleFerie('${d}')" title="${d}">
+      <span class="ferie-icon">${isFerie?'🏖':'📅'}</span>
+      <span class="ferie-lbl">${d.substring(0,2)}</span>
+      <input type="checkbox" class="ferie-check" ${isFerie?'checked':''} onclick="event.stopPropagation();toggleFerie('${d}')"/>
+    </div>`;
+  });
+  c.innerHTML=html;
+}
+
+// ============================================================
+// PLANNING ENGINE — GENERATE
+// ============================================================
+// Returns agents blocked by plage constraints for a given day+slot
+function getBlockedAgentsForSlot(day,slot){
+  const blocked=new Set();
+  const plages=(plageData[day]&&plageData[day][slot])||[];
+  plages.forEach(p=>{
+    if(p.blockedAgents&&p.blockedAgents.length>0){
+      p.blockedAgents.forEach(a=>blocked.add(a));
+    }
+  });
+  return blocked;
+}
+
+// CVM rotation counter persisted in memory for the week
+let cvmRotationIdx=0;
+
+function getManualSlotItems(day,slot,blocked){
+  const arr=(planningData[day]&&planningData[day][slot])||[];
+  return arr
+    .filter(x=>x.manual&&isAgentPresentOnDay(x.agent,day)&&!blocked.has(x.agent))
+    .map(x=>({...x,manual:true}));
+}
+
+function generatePlanning(message='⚡ Planning généré'){
+  if(locked){showToast('🔒 Planning verrouillé');return;}
+  cvmRotationIdx=0;
+  const newPlan={};const dynCount={};
+  AGENTS.forEach(a=>dynCount[a]=0);
+  DAYS.forEach(d=>{newPlan[d]={};SLOTS.forEach(s=>{newPlan[d][s]=[];});});
+
+  function activeOnDay(day){return AGENTS.filter(a=>isAgentPresentOnDay(a,day));}
+  function availableForSlot(day,slot){
+    const blocked=getBlockedAgentsForSlot(day,slot);
+    return activeOnDay(day).filter(a=>!blocked.has(a));
+  }
+  DAYS.forEach(d=>SLOTS.forEach(s=>{
+    if(isDayFerie(d))return;
+    const blocked=getBlockedAgentsForSlot(d,s);
+    getManualSlotItems(d,s,blocked).forEach(x=>{
+      if(x.activity==='DYN / MER')dynCount[x.agent]++;
+    });
+  }));
+
+  const afterFerieDays=new Set();
+  DAYS.forEach((d,i)=>{if(isDayFerie(d)&&i+1<DAYS.length)afterFerieDays.add(DAYS[i+1]);});
+
+  const enabledRules=fixedRules.filter(r=>r.enabled);
+
+  DAYS.forEach(day=>{
+    if(isDayFerie(day))return;
+    SLOTS.forEach(slot=>{
+      const dayActive=activeOnDay(day);
+      const avail=availableForSlot(day,slot);
+      const blocked=getBlockedAgentsForSlot(day,slot);
+      const slotRules=enabledRules.filter(r=>r.day===day&&r.slot===slot);
+      newPlan[day][slot]=getManualSlotItems(day,slot,blocked);
+
+      // ---- RÈGLES FIXES CONFIGURABLES ----
+      if(slotRules.length>0){
+        slotRules.forEach(rule=>{
+          const targets=rule.agents&&rule.agents.length>0
+            ?rule.agents.filter(a=>isAgentPresentOnDay(a,day))
+            :dayActive;
+          const count=rule.minAgents>0?Math.min(rule.minAgents,targets.length):targets.length;
+          const sh=shuffle(targets);
+          sh.slice(0,count).forEach(a=>{
+            if(rule.nonBlocking){
+              newPlan[day][slot].push({agent:a,activity:rule.activity,fixed:false,note:'📅 Collab'});
+            } else if(!newPlan[day][slot].find(x=>x.agent===a)){
+              newPlan[day][slot].push({agent:a,activity:rule.activity,fixed:false,note:''});
+            }
+          });
+        });
+        const assigned=new Set(newPlan[day][slot].map(x=>x.agent));
+        const remaining=dayActive.filter(a=>!assigned.has(a));
+        remaining.forEach(agent=>{
+          if(blocked.has(agent)){newPlan[day][slot].push({agent,activity:'Libre',fixed:false,note:'⚠ Plage contrainte'});return;}
+          const pool=['A&P','CVM','Permanence Visio','DYN / MER','Back Office','Corner Essentiel','Libre'];
+          let act='Libre';
+          for(const c of pool){if(c==='DYN / MER'&&dynCount[agent]>=1)continue;act=c;break;}
+          if(act==='DYN / MER')dynCount[agent]++;
+          newPlan[day][slot].push({agent,activity:act,fixed:false,note:''});
+        });
+        return;
+      }
+
+      // ---- AFTER-FERIE RULE ----
+      if(afterFerieDays.has(day)){
+        const assigned=new Set(newPlan[day][slot].map(x=>x.agent));
+        const sh=shuffle(dayActive.filter(a=>!assigned.has(a)));
+        if(dayActive.length<=2){sh.forEach(a=>newPlan[day][slot].push({agent:a,activity:'CVM',fixed:false,note:''}));}
+        else{
+          const rotated=[...sh.slice(cvmRotationIdx%sh.length),...sh.slice(0,cvmRotationIdx%sh.length)];
+          const cvm2=slot==='Matin'?rotated.slice(0,2):rotated.slice(2,4).length===2?rotated.slice(2,4):rotated.slice(0,2);
+          const cvm2Set=new Set(cvm2);
+          cvm2.forEach(a=>newPlan[day][slot].push({agent:a,activity:'CVM',fixed:false,note:''}));
+          sh.filter(a=>!cvm2Set.has(a)).forEach((a,i)=>{
+            const pool=['A&P','Back Office','Permanence Visio','Corner Essentiel','DYN / MER','Libre'];
+            let act=pool[i%pool.length];
+            if(act==='DYN / MER'&&dynCount[a]>=1)act='Back Office';
+            if(act==='DYN / MER')dynCount[a]++;
+            newPlan[day][slot].push({agent:a,activity:act,fixed:false,note:''});
+          });
+          if(slot==='Après-midi')cvmRotationIdx+=2;
+        }
+        return;
+      }
+
+      // ---- CRÉNEAU GÉNÉRIQUE ----
+      const assigned=new Set(newPlan[day][slot].map(x=>x.agent));
+      const base=(avail.length>0?avail:dayActive).filter(a=>!assigned.has(a));
+      const sh=shuffle(base);
+      let apDone=false,cvmDone=false,visioDone=false;
+      const slotItems=[...newPlan[day][slot]];
+      sh.forEach(agent=>{
+        let act;
+        if(!apDone){act='A&P';apDone=true;}
+        else if(!cvmDone){act='CVM';cvmDone=true;}
+        else if(!visioDone&&dayActive.length>=3){act='Permanence Visio';visioDone=true;}
+        else{
+          const pool=['DYN / MER','Back Office','Corner Essentiel','Collectif Visio','Collectif Physique','Libre','CVM'];
+          act='Libre';
+          for(const c of pool){
+            if(c==='DYN / MER'&&dynCount[agent]>=1)continue;
+            if(c==='Collectif Visio'&&slotItems.filter(x=>x.activity==='Collectif Visio').length>=2)continue;
+            if(c==='Collectif Physique'&&slotItems.filter(x=>x.activity==='Collectif Physique').length>=2)continue;
+            act=c;break;
+          }
+        }
+        if(act==='DYN / MER')dynCount[agent]++;
+        slotItems.push({agent,activity:act,fixed:false,note:''});
+      });
+      blocked.forEach(a=>{if(isAgentPresentOnDay(a,day))slotItems.push({agent:a,activity:'Libre',fixed:false,note:'⚠ Plage contrainte'});});
+      newPlan[day][slot]=slotItems;
+    });
+  });
+
+  planningData=newPlan;
+  saveWeekData();
+  renderAll();
+  showToast(message);
+}
+
+// ============================================================
+// REFRESH (recalculate without full reset)
+// ============================================================
+function refreshPlanning(){
+  if(locked){showToast('🔒 Planning verrouillé');return;}
+  generatePlanning('🔄 Planning actualisé autour des blocs manuels');
+}
+
+// ============================================================
+// RENDER ALL
+// ============================================================
+function renderAll(){renderPlanning();updateDashboard();updateStatus();}
+
+// ============================================================
+// PLAGE CONTRAINTE
+// ============================================================
+function buildAgentCheckList(containerId,blockedAgents){
+  const c=document.getElementById(containerId);
+  let html='';
+  AGENTS.forEach(a=>{
+    const isBlocked=(blockedAgents||[]).includes(a);
+    const color=AGENT_COLORS[a]||'#888';
+    const init=a.substring(0,2).toUpperCase();
+    html+=`<div class="plage-agent-check-row ${isBlocked?'is-blocked':''}" onclick="togglePlageAgentCheck(this)">
+      <input type="checkbox" ${isBlocked?'checked':''} onclick="event.stopPropagation();this.closest('.plage-agent-check-row').classList.toggle('is-blocked',this.checked)" data-agent="${a}"/>
+      <div class="plage-agent-dot" style="background:${color}">${init}</div>
+      <span class="plage-agent-name">${a}</span>
+      <span class="plage-blocked-label">${isBlocked?'Bloqué':''}</span>
+    </div>`;
+  });
+  c.innerHTML=html;
+}
+function togglePlageAgentCheck(row){
+  const cb=row.querySelector('input[type=checkbox]');
+  cb.checked=!cb.checked;
+  row.classList.toggle('is-blocked',cb.checked);
+  const lbl=row.querySelector('.plage-blocked-label');
+  if(lbl)lbl.textContent=cb.checked?'Bloqué':'';
+}
+function getCheckedBlockedAgents(containerId){
+  const boxes=document.querySelectorAll(`#${containerId} input[data-agent]`);
+  const result=[];
+  boxes.forEach(b=>{if(b.checked)result.push(b.getAttribute('data-agent'));});
+  return result;
+}
+
+function openAddPlageModal(day,slot){
+  if(locked){showToast('🔒 Planning verrouillé');return;}
+  if(day)document.getElementById('plageDay').value=day;
+  if(slot)document.getElementById('plageSlot').value=slot;
+  document.getElementById('plageTitre').value='';
+  document.getElementById('plageComment').value='';
+  buildAgentCheckList('plageAgentsList',[]);
+  document.getElementById('modalPlage').style.display='flex';
+  setTimeout(()=>document.getElementById('plageTitre').focus(),80);
+}
+// ============================================================
+// RECOMPUTE A SINGLE SLOT after plage change
+// ============================================================
+function recomputeSlot(day, slot){
+  if(!planningData[day]) planningData[day]={};
+  if(!planningData[day][slot]) planningData[day][slot]=[];
+
+  const dayActive = AGENTS.filter(a=>isAgentPresentOnDay(a,day));
+  if(dayActive.length===0){ planningData[day][slot]=[]; return; }
+
+  const blocked = getBlockedAgentsForSlot(day, slot);
+  const avail = dayActive.filter(a=>!blocked.has(a));
+
+  // Count existing DYN/MER across other slots to respect the weekly limit
+  const dynCount={};
+  AGENTS.forEach(a=>dynCount[a]=0);
+  DAYS.forEach(d=>SLOTS.forEach(s=>{
+    if(d===day&&s===slot) return; // skip current slot
+    const arr=(planningData[d]&&planningData[d][s])||[];
+    arr.forEach(x=>{if(x.activity==='DYN / MER'&&isAgentPresentOnDay(x.agent,d))dynCount[x.agent]++;});
+  }));
+
+  // Preserve manual assignments for agents NOT blocked
+  const preserved = planningData[day][slot].filter(x=>!blocked.has(x.agent)&&isAgentPresentOnDay(x.agent,day));
+  const preservedAgents = new Set(preserved.map(x=>x.agent));
+
+  // Agents who are newly blocked: remove their existing entry
+  // Agents available but not yet assigned: assign them
+  const toAssign = avail.filter(a=>!preservedAgents.has(a));
+  const newAssignments = [...preserved];
+
+  // Assign activities to newly available/unassigned agents
+  const pool=['A&P','CVM','Permanence Visio','DYN / MER','Back Office','Corner Essentiel','Collectif Visio','Collectif Physique','Libre'];
+  const usedActs = new Set(preserved.map(x=>x.activity));
+
+  toAssign.forEach(agent=>{
+    let act='Libre';
+    for(const c of pool){
+      if(c==='DYN / MER'&&dynCount[agent]>=1) continue;
+      if(c==='Collectif Visio'&&newAssignments.filter(x=>x.activity==='Collectif Visio').length>=2) continue;
+      if(c==='Collectif Physique'&&newAssignments.filter(x=>x.activity==='Collectif Physique').length>=2) continue;
+      act=c; break;
+    }
+    if(act==='DYN / MER') dynCount[agent]++;
+    newAssignments.push({agent, activity:act, fixed:false, note:''});
+  });
+
+  // Add blocked agents as Libre with note
+  blocked.forEach(a=>{
+    if(isAgentPresentOnDay(a,day)){
+      newAssignments.push({agent:a, activity:'Libre', fixed:false, note:'⚠ Plage contrainte'});
+    }
+  });
+
+  planningData[day][slot] = newAssignments;
+}
+
+function savePlage(){
+  const day=document.getElementById('plageDay').value;
+  const slot=document.getElementById('plageSlot').value;
+  const titre=document.getElementById('plageTitre').value.trim();
+  const comment=document.getElementById('plageComment').value.trim();
+  const blockedAgents=getCheckedBlockedAgents('plageAgentsList');
+  if(!titre){showToast('⚠ Titre requis');
+  checkPizzaEgg(titre);return;}
+  if(!plageData[day])plageData[day]={};
+  if(!plageData[day][slot])plageData[day][slot]=[];
+  plageData[day][slot].push({titre,comment,agent:'',blockedAgents});
+  // Recalculate the affected slot
+  if(blockedAgents.length>0) recomputeSlot(day, slot);
+  closeModal('modalPlage');
+  saveWeekData();
+  renderAll();
+  showToast('🚧 Plage contrainte ajoutée' + (blockedAgents.length>0 ? ' — planning recalculé' : ''));
+}
+
+function deletePlage(day,slot,idx){
+  if(locked){showToast('🔒 Planning verrouillé');return;}
+  const hadBlocked=(plageData[day][slot][idx].blockedAgents||[]).length>0;
+  plageData[day][slot].splice(idx,1);
+  if(hadBlocked) recomputeSlot(day, slot);
+  saveWeekData();renderAll();
+  showToast('🗑 Plage supprimée' + (hadBlocked ? ' — planning recalculé' : ''));
+}
+
+function editPlage(day,slot,idx){
+  if(locked){showToast('🔒 Planning verrouillé');return;}
+  const p=plageData[day][slot][idx];
+  const sel=document.getElementById('plageEditAgent');
+  sel.innerHTML='<option value="">— Toute l\'équipe —</option>'+AGENTS.map(a=>`<option value="${a}" ${p.agent===a?'selected':''}>${a}</option>`).join('');
+  document.getElementById('plageEditTitre').value=p.titre;
+  document.getElementById('plageEditComment').value=p.comment||'';
+  buildAgentCheckList('plageEditAgentsList',p.blockedAgents||[]);
+  document.getElementById('plageEditDay').value=day;
+  document.getElementById('plageEditSlot').value=slot;
+  document.getElementById('plageEditIdx').value=idx;
+  document.getElementById('modalPlageEdit').style.display='flex';
+}
+
+function savePlageEdit(){
+  const day=document.getElementById('plageEditDay').value;
+  const slot=document.getElementById('plageEditSlot').value;
+  const idx=parseInt(document.getElementById('plageEditIdx').value);
+  const agent=document.getElementById('plageEditAgent').value;
+  const titre=document.getElementById('plageEditTitre').value.trim();
+  const comment=document.getElementById('plageEditComment').value.trim();
+  const blockedAgents=getCheckedBlockedAgents('plageEditAgentsList');
+  if(!titre){showToast('⚠ Titre requis');return;}
+  plageData[day][slot][idx]={titre,comment,agent,blockedAgents};
+  recomputeSlot(day, slot);
+  closeModal('modalPlageEdit');
+  saveWeekData();renderAll();
+  showToast('✏️ Plage mise à jour — planning recalculé');
+}
+
+// ============================================================
+// NOTES
+// ============================================================
+function openNoteModal(agent,day){
+  if(locked){showToast('🔒 Planning verrouillé');return;}
+  _noteTarget={agent,day};
+  document.getElementById('noteAgentName').textContent=agent+(day?' – '+day:'');
+  const cur=(agentNotes[agent]&&agentNotes[agent][day])?agentNotes[agent][day]:'';
+  document.getElementById('noteText').value=cur;
+  document.getElementById('modalNote').style.display='flex';
+  setTimeout(()=>document.getElementById('noteText').focus(),80);
+}
+function saveNote(){
+  if(!_noteTarget)return;
+  const{agent,day}=_noteTarget;
+  if(!agentNotes[agent])agentNotes[agent]={};
+  agentNotes[agent][day]=document.getElementById('noteText').value.trim();
+  closeModal('modalNote');
+  saveWeekData();renderAll();
+  showToast('💬 Note enregistrée');
+}
+function closeModal(id){document.getElementById(id).style.display='none';}
+
+// ============================================================
+// RENDER PLANNING
+// ============================================================
+function getDynCounts(){
+  const dc={};AGENTS.forEach(a=>dc[a]=0);
+  DAYS.forEach(d=>SLOTS.forEach(s=>{
+    const arr=(planningData[d]&&planningData[d][s])||[];
+    arr.forEach(x=>{if(x.activity==='DYN / MER'&&isAgentPresentOnDay(x.agent,d))dc[x.agent]++;});
+  }));return dc;
+}
+function getWorkloadCounts(){
+  const wc={};AGENTS.forEach(a=>wc[a]=0);
+  DAYS.forEach(d=>SLOTS.forEach(s=>{
+    const arr=(planningData[d]&&planningData[d][s])||[];
+    arr.forEach(x=>{if(isAgentPresentOnDay(x.agent,d)&&x.activity!=='Libre')wc[x.agent]++;});
+  }));return wc;
+}
+
+function renderPlanning(){
+  const monday=getMonday(currentWeekOffset);
+  const container=document.getElementById('planningTable');
+  let html=`<table class="planning-table"><thead><tr><th style="width:56px;"></th>`;
+  DAYS.forEach((day,i)=>{
+    const d=new Date(monday);d.setDate(monday.getDate()+i);
+    const ds=d.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'});
+    const ferie=isDayFerie(day);
+    html+=`<th class="day-header ${ferie?'day-ferie-header':''}">${day}${ferie?' 🏖':''}<br><span style="font-family:'DM Mono',monospace;font-weight:400;font-size:0.68rem;color:var(--text2)">${ds}</span></th>`;
+  });
+  html+=`</tr></thead><tbody>`;
+
+  SLOTS.forEach(slot=>{
+    html+=`<tr><td style="background:var(--surface2);font-size:0.7rem;font-weight:700;color:var(--text2);text-align:center;vertical-align:middle;padding:5px 2px;border:1.5px solid var(--border);"><div style="writing-mode:vertical-lr;transform:rotate(180deg)">${slot}</div></td>`;
+    DAYS.forEach(day=>{
+      const ferie=isDayFerie(day);
+      const cellKey=`${day}-${slot}`;
+      const assignments=(planningData[day]&&planningData[day][slot])||[];
+      const plages=(plageData[day]&&plageData[day][slot])||[];
+      const activeOnThisDay=AGENTS.filter(a=>isAgentPresentOnDay(a,day));
+      const allAbsent=!ferie&&activeOnThisDay.length===0;
+      const visibleAssignments=assignments.filter(x=>isAgentPresentOnDay(x.agent,day));
+
+      html+=`<td class="${allAbsent?'absent-cell':ferie?'ferie-day-col':''}">`;
+      if(ferie){
+        html+=`<div style="display:flex;align-items:center;justify-content:center;height:60px;color:#b85c00;font-size:0.78rem;font-weight:600;">🏖 Jour férié</div>`;
+      } else {
+        html+=`<div class="slot-container" id="slot-${cellKey}" data-day="${day}" data-slot="${slot}">`;
+        if(visibleAssignments.length===0&&plages.length===0&&activeOnThisDay.length>0){
+          html+=`<div style="color:var(--text2);font-size:0.68rem;font-style:italic;padding:3px 2px;">Non planifié</div>`;
+        }
+        // Activity cards
+        assignments.forEach((item,idx2)=>{
+          if(!isAgentPresentOnDay(item.agent,day))return;
+          const actClass=ACT_CLASS[item.activity]||'act-libre';
+          const agentColor=AGENT_COLORS[item.agent]||'#888';
+          const initials=item.agent.substring(0,2).toUpperCase();
+          const note=item.note||(agentNotes[item.agent]&&agentNotes[item.agent][day])||'';
+          const hasNote=note.length>0;
+          const isPlageBlocked=note.includes('Plage contrainte');
+          const draggable=!locked?'':'data-nodrag="1"';
+          html+=`<div class="activity-card ${actClass}" data-day="${day}" data-slot="${slot}" data-idx="${idx2}" ${draggable}>
+            <div class="card-left">
+              <div class="card-agent-dot" style="background:${agentColor}">${initials}</div>
+              <div>
+                <div class="card-act">${item.activity}${isPlageBlocked?'<span class="plage-blocked-tag" style="margin-left:3px;">bloqué</span>':''}</div>
+                <div class="card-agent">${item.agent}</div>
+              </div>
+            </div>
+            <div class="card-right">
+              ${!locked?`<button class="note-btn ${hasNote?'has-note':''}" onclick="event.stopPropagation();openNoteModal('${item.agent}','${day}')" title="Note">💬</button>`:''}
+              ${!locked?`<button class="edit-card-btn" onclick="event.stopPropagation();openEditBlockModal('${day}','${slot}',${idx2})" title="Modifier">✏️</button>`:''}
+              ${!locked?`<button class="del-card-btn" onclick="event.stopPropagation();deleteBlock('${day}','${slot}',${idx2})" title="Supprimer">✕</button>`:''}
+              ${locked?'<span class="lock-icon">🔒</span>':''}
+            </div>
+            ${hasNote?`<div class="note-tooltip">${note.replace(/</g,'&lt;')}</div>`:''}
+          </div>`;
+        });
+        // Plage cards
+        plages.forEach((p,pi)=>{
+          const bCount=(p.blockedAgents&&p.blockedAgents.length)||0;
+          html+=`<div class="plage-card" data-plage="1">
+            <div class="plage-header">
+              <div class="plage-title">🚧 ${p.titre.replace(/</g,'&lt;')}</div>
+              ${!locked?`<div style="display:flex;gap:2px;">
+                <button class="plage-edit" onclick="event.stopPropagation();editPlage('${day}','${slot}',${pi})">✏️</button>
+                <button class="plage-del" onclick="event.stopPropagation();deletePlage('${day}','${slot}',${pi})">✕</button>
+              </div>`:'<span class="lock-icon">🔒</span>'}
+            </div>
+            ${p.comment?`<div class="plage-comment">${p.comment.replace(/</g,'&lt;')}</div>`:''}
+            ${bCount>0?`<div style="font-size:0.64rem;color:#c03020;margin-top:3px;">🚫 ${bCount} agent${bCount>1?'s':''} bloqué${bCount>1?'s':''}</div>`:''}
+            ${p.agent?`<div style="font-size:0.66rem;color:#a05010;margin-top:2px;">👤 ${p.agent}</div>`:''}
+          </div>`;
+        });
+        if(!locked){
+          html+=`<button class="add-plage-btn" onclick="openAddPlageModal('${day}','${slot}')">＋ Plage</button>`;
+          html+=`<button class="add-block-btn" onclick="openAddBlockModal('${day}','${slot}')">＋ Bloc</button>`;
+        }
+        html+=`</div>`;
+      }
+      html+=`</td>`;
+    });
+    html+=`</tr>`;
+  });
+  html+=`</tbody></table>`;
+  container.innerHTML=html;
+  if(!locked)initSortable();
+  updateDashboard();updateStatus();
+}
+
+function initSortable(){
+  DAYS.forEach(day=>SLOTS.forEach(slot=>{
+    const el=document.getElementById(`slot-${day}-${slot}`);
+    if(!el)return;
+    Sortable.create(el,{
+      group:'planning',animation:160,
+      ghostClass:'sortable-ghost',dragClass:'sortable-drag',
+      filter:'[data-nodrag],[data-plage],.add-plage-btn,.add-block-btn,.plage-card,.del-card-btn,.edit-card-btn,.note-btn,.plage-del,.plage-edit',
+      onEnd(evt){handleDragEnd(evt);}
+    });
+  }));
+}
+
+function handleDragEnd(evt){
+  const fromDay=evt.from.dataset.day;const fromSlot=evt.from.dataset.slot;
+  const toDay=evt.to.dataset.day;const toSlot=evt.to.dataset.slot;
+  if(!fromDay||!toDay){renderPlanning();return;}
+  if(!planningData[fromDay]||!planningData[fromDay][fromSlot]){renderPlanning();return;}
+  if(!planningData[toDay])planningData[toDay]={};
+  if(!planningData[toDay][toSlot])planningData[toDay][toSlot]=[];
+  const fromArr=planningData[fromDay][fromSlot];
+  const toArr=planningData[toDay][toSlot];
+  const movableFrom=fromArr.filter(x=>x);
+  const movingItem=movableFrom[evt.oldIndex];
+  if(!movingItem){renderPlanning();return;}
+  movingItem.manual=true;
+  const realFromIdx=fromArr.indexOf(movingItem);
+  fromArr.splice(realFromIdx,1);
+  const movableTo=toArr.filter(x=>x);
+  if(evt.newIndex>=movableTo.length){toArr.push(movingItem);}
+  else{const after=movableTo[evt.newIndex];const ri=toArr.indexOf(after);toArr.splice(ri,0,movingItem);}
+  saveWeekData();renderPlanning();
+  showToast(`🔄 ${movingItem.agent} → ${toDay} ${toSlot}`);
+}
+
+// ============================================================
+// EDIT / ADD / DELETE BLOCKS
+// ============================================================
+function openEditBlockModal(day,slot,idx){
+  if(locked){showToast('🔒 Planning verrouillé');return;}
+  const item=planningData[day]&&planningData[day][slot]&&planningData[day][slot][idx];
+  if(!item)return;
+  const agSel=document.getElementById('editBlockAgent');
+  agSel.innerHTML=AGENTS.map(a=>`<option value="${a}" ${a===item.agent?'selected':''}>${a}</option>`).join('');
+  const actSel=document.getElementById('editBlockActivity');
+  actSel.innerHTML=ACTIVITIES.map(a=>`<option value="${a}">${a}</option>`).join('');
+  [...actSel.options].forEach(o=>o.selected=(o.value===item.activity));
+  document.getElementById('editBlockDay').value=day;
+  document.getElementById('editBlockSlot').value=slot;
+  document.getElementById('editBlockIdx').value=idx;
+  document.getElementById('modalEditBlock').style.display='flex';
+}
+function saveEditBlock(){
+  const day=document.getElementById('editBlockDay').value;
+  const slot=document.getElementById('editBlockSlot').value;
+  const idx=parseInt(document.getElementById('editBlockIdx').value);
+  const agent=document.getElementById('editBlockAgent').value;
+  const activity=document.getElementById('editBlockActivity').value;
+  if(!planningData[day]||!planningData[day][slot])return;
+  planningData[day][slot][idx]={...planningData[day][slot][idx],agent,activity,fixed:false,manual:true};
+  closeModal('modalEditBlock');
+  saveWeekData();renderAll();
+  showToast(`✏️ Bloc modifié`);
+}
+function openAddBlockModal(day,slot){
+  if(locked){showToast('🔒 Planning verrouillé');return;}
+  document.getElementById('blockDay').value=day;
+  document.getElementById('blockSlot').value=slot;
+  document.getElementById('blockAgent').innerHTML=AGENTS.map(a=>`<option value="${a}">${a}</option>`).join('');
+  document.getElementById('blockActivity').innerHTML=ACTIVITIES.map(a=>`<option value="${a}">${a}</option>`).join('');
+  document.getElementById('modalAddBlock').style.display='flex';
+}
+function saveBlock(){
+  const day=document.getElementById('blockDay').value;
+  const slot=document.getElementById('blockSlot').value;
+  const agent=document.getElementById('blockAgent').value;
+  const activity=document.getElementById('blockActivity').value;
+  if(!planningData[day])planningData[day]={};
+  if(!planningData[day][slot])planningData[day][slot]=[];
+  planningData[day][slot].push({agent,activity,fixed:false,note:'',manual:true});
+  closeModal('modalAddBlock');
+  saveWeekData();renderAll();
+  showToast(`➕ ${agent} · ${activity} ajouté`);
+}
+function deleteBlock(day,slot,idx){
+  if(locked){showToast('🔒 Planning verrouillé');return;}
+  const arr=planningData[day]&&planningData[day][slot];
+  if(!arr)return;
+  arr.splice(idx,1);
+  saveWeekData();renderAll();
+  showToast('🗑 Bloc supprimé');
+}
+
+// ============================================================
+// AGENTS
+// ============================================================
+function renderAgents(){
+  const container=document.getElementById('agentList');
+  const dynCounts=getDynCounts();
+  const wc=getWorkloadCounts();
+  const maxSlots=DAYS.length*SLOTS.length;
+  let html='';
+  AGENTS.forEach(function(agent){
+    const color=AGENT_COLORS[agent]||'#888';
+    const initials=agent.substring(0,2).toUpperCase();
+    const fullyAbsent=isAgentFullyAbsent(agent);
+    const partial=isAgentPartial(agent);
+    const dc=dynCounts[agent]||0;
+    const wcv=wc[agent]||0;
+    const wcPct=Math.round((wcv/maxSlots)*100);
+    const wcColor=wcPct>=80?'#e8445a':wcPct>=50?'#f5a623':'#38c8a8';
+    const dynClass=dc===0?'dyn-ok':dc===1?'dyn-warn':'dyn-over';
+    const dynText=dc===0?'DYN: 0/1':dc===1?'DYN: 1/1 ✓':'DYN: '+dc+'/1 ⚠';
+    const daysPresent=DAYS.filter(function(d){return isAgentPresentOnDay(agent,d);}).length;
+
+    // Build day grid separately to avoid nested backtick issues
+    var daysHtml='';
+    DAYS.forEach(function(d){
+      var pres=isAgentPresentOnDay(agent,d);
+      var isFerie=isDayFerie(d);
+      var cellClass='day-check-cell '+(isFerie?'day-ferie':(pres?'day-present':'day-absent'));
+      var onclickDiv=isFerie?'':'toggleAgentDay(\''+agent+'\',\''+d+'\')';
+      var onclickCb=isFerie?'':'event.stopPropagation();toggleAgentDay(\''+agent+'\',\''+d+'\')';
+      var title=agent+' – '+d+(isFerie?' (férié)':'');
+      daysHtml+='<div class="'+cellClass+'" onclick="'+onclickDiv+'" title="'+title+'">';
+      daysHtml+='<span class="day-check-lbl">'+d.substring(0,2)+'</span>';
+      daysHtml+='<input type="checkbox" class="day-check-box"'+(pres?' checked':'')+(isFerie?' disabled':'')+' onclick="'+onclickCb+'"/>';
+      daysHtml+='</div>';
+    });
+
+    html+='<div class="agent-item-wrap'+(fullyAbsent?' agent-fully-absent':'')+'">';
+    html+='<div class="agent-item-top" onclick="toggleAgentAllDays(\''+agent+'\');">';
+    html+='<div class="agent-avatar" style="background:'+color+'">'+initials+'</div>';
+    html+='<div class="agent-info" style="flex:1;min-width:0;">';
+    html+='<div style="display:flex;align-items:center;gap:4px;">';
+    html+='<span class="agent-name">'+agent+'</span>';
+    if(partial) html+='<span class="agent-partial-badge">'+daysPresent+'j/5</span>';
+    html+='</div>';
+    if(!fullyAbsent){
+      html+='<span class="agent-dyn-badge '+dynClass+'">'+dynText+'</span>';
+    } else {
+      html+='<span style="font-size:0.65rem;color:var(--text2);">Absent</span>';
+    }
+    html+='</div>';
+    html+='<input type="checkbox" class="agent-check"'+((!fullyAbsent)?' checked':'')+' onclick="event.stopPropagation();toggleAgentAllDays(\''+agent+'\')"/>';
+    html+='</div>'; // close agent-item-top
+    if(!fullyAbsent){
+      html+='<div class="agent-days-grid">'+daysHtml+'</div>';
+      html+='<div class="workload-bar-wrap" style="padding:0 2px;margin-top:3px;">';
+      html+='<div class="workload-bar-bg"><div class="workload-bar-fill" style="width:'+wcPct+'%;background:'+wcColor+'"></div></div>';
+      html+='<div class="workload-label">Charge: '+wcv+'/'+maxSlots+'</div>';
+      html+='</div>';
+    }
+    html+='</div>'; // close agent-item-wrap
+  });
+  container.innerHTML=html;
+}
+
+function toggleAgentAllDays(agent){
+  if(locked){showToast('🔒 Planning verrouillé');return;}
+  if(!presence[agent]){presence[agent]={};DAYS.forEach(d=>presence[agent][d]=true);}
+  const allPresent=DAYS.every(d=>presence[agent][d]);
+  DAYS.forEach(d=>presence[agent][d]=!allPresent);
+  saveWeekData();renderAgents();renderPlanning();
+}
+function toggleAgentDay(agent,day){
+  if(locked){showToast('🔒 Planning verrouillé');return;}
+  if(isDayFerie(day)){showToast('🏖 Jour férié — pas de présence');return;}
+  if(!presence[agent]){presence[agent]={};DAYS.forEach(d=>presence[agent][d]=true);}
+  presence[agent][day]=!presence[agent][day];
+  saveWeekData();renderAgents();renderPlanning();
+  showToast(`${agent} — ${day}: ${presence[agent][day]?'présent':'absent'}`);
+}
+function toggleAllAgents(){
+  if(locked){showToast('🔒 Planning verrouillé');return;}
+  const allOn=AGENTS.every(a=>!isAgentFullyAbsent(a));
+  AGENTS.forEach(a=>{if(!presence[a])presence[a]={};DAYS.forEach(d=>presence[a][d]=!allOn);});
+  saveWeekData();renderAgents();renderPlanning();
+}
+
+// ============================================================
+// DASHBOARD & STATUS
+// ============================================================
+function updateDashboard(){
+  const active=getActiveAgents();
+  document.getElementById('d-present').textContent=active.length;
+  let covered=0,total=0;
+  DAYS.forEach(d=>{
+    if(isDayFerie(d))return;
+    SLOTS.forEach(s=>{
+      total++;
+      const arr=(planningData[d]&&planningData[d][s])||[];
+      if(arr.filter(x=>isAgentPresentOnDay(x.agent,d)).length>0)covered++;
+    });
+  });
+  const uncovered=total-covered;
+  const rate=total>0?Math.round((covered/total)*100):0;
+  document.getElementById('d-covered').textContent=covered;
+  document.getElementById('d-uncovered').textContent=uncovered;
+  document.getElementById('d-rate').textContent=rate+'%';
+  document.getElementById('d-rate').className='dash-val '+(rate>=80?'green':rate>=50?'orange':'red');
+  renderAgents();
+}
+
+function updateStatus(){
+  const active=getActiveAgents();const errors=[];
+  if(!active.length){errors.push('Aucun agent présent cette semaine');renderStatus(errors);return;}
+  fixedRules.filter(r=>r.enabled).forEach(rule=>{
+    if(isDayFerie(rule.day))return;
+    const dayActive=AGENTS.filter(a=>isAgentPresentOnDay(a,rule.day));
+    const arr=(planningData[rule.day]&&planningData[rule.day][rule.slot])||[];
+    const count=arr.filter(x=>x.activity===rule.activity&&isAgentPresentOnDay(x.agent,rule.day)).length;
+    const minReq=rule.minAgents>0?rule.minAgents:(rule.agents&&rule.agents.length?rule.agents.filter(a=>isAgentPresentOnDay(a,rule.day)).length:dayActive.length);
+    if(count<minReq)errors.push(rule.desc||rule.activity+' incomplet – '+rule.day+' '+rule.slot);
+  });
+  const dynC={};AGENTS.forEach(a=>dynC[a]=0);
+  DAYS.forEach(d=>SLOTS.forEach(s=>{const arr=(planningData[d]&&planningData[d][s])||[];arr.forEach(x=>{if(x.activity==='DYN / MER'&&isAgentPresentOnDay(x.agent,d))dynC[x.agent]++;});}));
+  Object.entries(dynC).forEach(([a,c])=>{if(!isAgentFullyAbsent(a)&&c>1)errors.push(`${a} a DYN/MER ${c}x (max 1/semaine)`);});
+  let hasAP=false,hasCVM=false,hasVisio=false;
+  DAYS.forEach(d=>SLOTS.forEach(s=>{const arr=(planningData[d]&&planningData[d][s])||[];arr.forEach(x=>{if(!isAgentPresentOnDay(x.agent,d))return;if(x.activity==='A&P')hasAP=true;if(x.activity==='CVM')hasCVM=true;if(x.activity==='Permanence Visio')hasVisio=true;});}));
+  if(!hasAP&&active.length>=2)errors.push('Aucun agent en A&P cette semaine');
+  if(!hasCVM)errors.push('Aucun agent en CVM cette semaine');
+  if(!hasVisio&&active.length>=3)errors.push('Aucun agent en Permanence Visio');
+  renderStatus(errors);
+}
+
+function renderStatus(errors){
+  const zone=document.getElementById('statusZone');
+  if(errors.length===0){
+    zone.innerHTML=`<div class="status-badge status-ok"><div class="status-dot status-dot-ok"></div>Conforme ✓</div>`;
+  } else {
+    let html=`<div class="status-badge status-err"><div class="status-dot status-dot-err"></div>Non conforme (${errors.length})</div><div class="error-list">`;
+    errors.forEach(e=>{html+=`<div class="error-item">⚠ ${e}</div>`;});
+    zone.innerHTML=html+'</div>';
+  }
+}
+
+// ============================================================
+// LEGEND
+// ============================================================
+function renderLegend(){
+  const c=document.getElementById('legendGrid');
+  let html='';
+  ACTIVITIES.forEach(act=>{
+    const color=ACT_COLORS_HEX[act]||'#888';
+    const abbrev=act.length>14?act.substring(0,12)+'…':act;
+    html+=`<div class="legend-item"><div class="legend-dot" style="background:${color}"></div><span>${abbrev}</span></div>`;
+  });
+  c.innerHTML=html;
+}
+
+// ============================================================
+// HISTORY MANAGEMENT
+// ============================================================
+function openHistoryModal(){
+  renderHistoryList();
+  document.getElementById('modalHistory').style.display='flex';
+}
+function renderHistoryList(){
+  const c=document.getElementById('historyList');
+  const keys=Object.keys(planningHistory).sort().reverse();
+  if(keys.length===0){c.innerHTML='<div style="font-size:0.8rem;color:var(--text2);padding:10px;">Aucun historique.</div>';return;}
+  let html='';
+  keys.forEach(k=>{
+    const w=planningHistory[k];
+    const label=w.weekLabel||k;
+    const d=w.savedAt?new Date(w.savedAt).toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'';
+    html+=`<div class="history-entry">
+      <input type="checkbox" class="history-entry-check" data-key="${k}"/>
+      <span class="history-entry-week" onclick="loadFromHistory('${k}');closeModal('modalHistory')">${label}</span>
+      <span class="history-entry-date">${d}</span>
+      <button class="history-del" onclick="deleteSingleHistory('${k}')" title="Supprimer">🗑</button>
+    </div>`;
+  });
+  c.innerHTML=html;
+}
+function selectAllHistory(val){
+  document.querySelectorAll('.history-entry-check').forEach(cb=>cb.checked=val);
+}
+function deleteSelectedHistory(){
+  const keys=[];
+  document.querySelectorAll('.history-entry-check:checked').forEach(cb=>keys.push(cb.getAttribute('data-key')));
+  if(keys.length===0){showToast('⚠ Aucune semaine sélectionnée');return;}
+  keys.forEach(k=>delete planningHistory[k]);
+  localStorage.setItem('ft-history',JSON.stringify(planningHistory));
+  updateHistorySelect();renderHistoryList();
+  showToast(`🗑 ${keys.length} semaine${keys.length>1?'s':''} supprimée${keys.length>1?'s':''}`);
+}
+function deleteSingleHistory(key){
+  delete planningHistory[key];
+  localStorage.setItem('ft-history',JSON.stringify(planningHistory));
+  updateHistorySelect();renderHistoryList();
+  showToast('🗑 Semaine supprimée');
+}
+function deleteAllHistory(){
+  if(!confirm('Supprimer tout l\'historique ? Cette action est irréversible.'))return;
+  planningHistory={};
+  localStorage.setItem('ft-history',JSON.stringify(planningHistory));
+  updateHistorySelect();renderHistoryList();
+  showToast('🗑 Historique vidé');
+}
+
+// ============================================================
+// TEAM MANAGEMENT
+// ============================================================
+let _teamEditRows=[];
+function openTeamModal(){
+  _teamEditRows=AGENTS.map(a=>({oldName:a,newName:a,color:AGENT_COLORS[a]||'#5a67f2'}));
+  renderTeamRows();
+  document.getElementById('modalTeam').style.display='flex';
+}
+function renderTeamRows(){
+  const c=document.getElementById('teamAgentRows');
+  let html='';
+  _teamEditRows.forEach((row,i)=>{
+    html+=`<div class="team-agent-row" id="teamRow${i}">
+      <div class="team-agent-color" title="Couleur">
+        <div style="width:100%;height:100%;border-radius:50%;background:${row.color};"></div>
+        <input type="color" value="${row.color}" oninput="updateTeamRowColor(${i},this.value)"/>
+      </div>
+      <input class="team-agent-input" type="text" value="${row.newName}" placeholder="Prénom…" oninput="updateTeamRowName(${i},this.value)" maxlength="30"/>
+      <button class="team-del-btn" onclick="removeTeamRow(${i})" ${_teamEditRows.length>1?'':'disabled'}>🗑</button>
+    </div>`;
+  });
+  c.innerHTML=html;
+}
+function updateTeamRowName(i,val){_teamEditRows[i].newName=val;}
+function updateTeamRowColor(i,val){
+  _teamEditRows[i].color=val;
+  const row=document.getElementById('teamRow'+i);
+  if(row){const sw=row.querySelector('.team-agent-color > div');if(sw)sw.style.background=val;}
+}
+function removeTeamRow(i){if(_teamEditRows.length<=1)return;_teamEditRows.splice(i,1);renderTeamRows();}
+function addAgentRow(){
+  const ci=_teamEditRows.length%COLOR_PALETTE.length;
+  _teamEditRows.push({oldName:'',newName:'',color:COLOR_PALETTE[ci]});
+  renderTeamRows();
+  setTimeout(()=>{const inputs=document.querySelectorAll('.team-agent-input');if(inputs.length)inputs[inputs.length-1].focus();},60);
+}
+function saveTeam(){
+  const names=_teamEditRows.map(r=>r.newName.trim()).filter(Boolean);
+  if(names.length!==_teamEditRows.length){showToast('⚠ Prénom requis pour chaque agent');return;}
+  if(new Set(names).size!==names.length){showToast('⚠ Prénoms dupliqués');return;}
+  const renameMap={};
+  _teamEditRows.forEach(r=>{if(r.oldName)renameMap[r.oldName]=r.newName.trim();});
+  const newColors={};
+  _teamEditRows.forEach(r=>{newColors[r.newName.trim()]=r.color;});
+  DAYS.forEach(d=>SLOTS.forEach(s=>{
+    const arr=(planningData[d]&&planningData[d][s])||[];
+    arr.forEach(item=>{if(renameMap[item.agent]!==undefined)item.agent=renameMap[item.agent];});
+  }));
+  const newNotes={};
+  Object.entries(agentNotes).forEach(([a,v])=>{const na=renameMap[a]!==undefined?renameMap[a]:a;newNotes[na]=v;});
+  agentNotes=newNotes;
+  const newPresence={};
+  _teamEditRows.forEach(r=>{
+    const name=r.newName.trim();const oldName=r.oldName||name;
+    if(presence[oldName]&&typeof presence[oldName]==='object'){newPresence[name]={...presence[oldName]};}
+    else{newPresence[name]={};DAYS.forEach(d=>newPresence[name][d]=true);}
+  });
+  presence=newPresence;
+  AGENTS=names;AGENT_COLORS=newColors;
+  // Check Mario easter egg
+  names.forEach(n=>checkMarioEgg(n));
+  closeModal('modalTeam');
+  saveWeekData();renderAgents();renderPlanning();updateDashboard();updateStatus();
+  showToast('👥 Équipe mise à jour');
+}
+
+// ============================================================
+// PDF EXPORT
+// ============================================================
+function exportPDF(){
+  const active=getActiveAgents();
+  const weekStr=formatWeekDisplay(currentWeekOffset);
+  const monday=getMonday(currentWeekOffset);
+  let html=`<html><head><style>
+    body{font-family:Arial,sans-serif;font-size:10px;color:#1a1d2e;}
+    h1{font-size:14px;margin-bottom:3px;}
+    .sub{color:#666;font-size:9px;margin-bottom:12px;}
+    table{border-collapse:collapse;width:100%;margin-top:12px;}
+    th{background:#5a67f2;color:#fff;padding:5px 3px;font-size:8px;text-transform:uppercase;}
+    th.ferie-th{background:#f0a020;}
+    td{border:1px solid #dde;padding:3px;vertical-align:top;min-height:40px;}
+    .slot-td{background:#f0f0f8;font-weight:bold;color:#666;font-size:8px;text-align:center;writing-mode:vertical-lr;transform:rotate(180deg);width:18px;}
+    .card{border-radius:3px;padding:2px 4px;margin-bottom:2px;font-size:8px;}
+    .plage-pdf{border-radius:3px;padding:2px 4px;margin-bottom:2px;font-size:7px;background:#fff3e0;border:1px dashed #ff9f43;color:#b06010;}
+    .ferie-pdf{background:#fff8f0;text-align:center;font-size:9px;color:#b85c00;padding:10px;}
+    .footer{margin-top:12px;color:#aaa;font-size:8px;text-align:right;}
+  </style></head><body>
+    <h1>${appTitle}</h1>
+    <div class="sub">${weekStr} | Présents: ${active.join(', ')}${AGENTS.filter(a=>isAgentPartial(a)).map(a=>{const abs=DAYS.filter(d=>!isAgentPresentOnDay(a,d));return ` | ${a} absent: ${abs.join(', ')}`;}).join('')}${Object.values(ferieData).some(Boolean)?' | Fériés: '+DAYS.filter(d=>isDayFerie(d)).join(', '):''}</div>
+    <table><thead><tr><th></th>`;
+  DAYS.forEach((day,i)=>{
+    const d=new Date(monday);d.setDate(monday.getDate()+i);
+    const ds=d.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'});
+    html+=`<th class="${isDayFerie(day)?'ferie-th':''}">${day}${isDayFerie(day)?' 🏖':''}<br>${ds}</th>`;
+  });
+  html+=`</tr></thead><tbody>`;
+  SLOTS.forEach(slot=>{
+    html+=`<tr><td class="slot-td">${slot}</td>`;
+    DAYS.forEach(day=>{
+      html+=`<td>`;
+      if(isDayFerie(day)){html+=`<div class="ferie-pdf">🏖 Férié</div>`;html+=`</td>`;return;}
+      const arr=(planningData[day]&&planningData[day][slot])||[];
+      const plages=(plageData[day]&&plageData[day][slot])||[];
+      const bg={'A&P':'#e8f0ff','DYN / MER':'#fff3e0','CVM':'#fce8ff','Dossier transversal':'#e8faf4','Corner Essentiel':'#fff8e1','Permanence Visio':'#e8f4ff','Back Office':'#f0f0ff',"Segmentation travail d'équipe":'#e8fff4','Collectif Visio':'#fff0f8','Collectif Physique':'#fff8f0','Libre':'#f8f8f8'};
+      arr.filter(x=>isAgentPresentOnDay(x.agent,day)).forEach(item=>{
+        const note=item.note||(agentNotes[item.agent]&&agentNotes[item.agent][day])||'';
+        html+=`<div class="card" style="background:${bg[item.activity]||'#f8f8f8'}">${item.agent} – ${item.activity}${note?` <i>(${note})</i>`:''}</div>`;
+      });
+      plages.forEach(p=>{
+        const bCount=(p.blockedAgents&&p.blockedAgents.length)||0;
+        html+=`<div class="plage-pdf">🚧 ${p.titre}${p.comment?' – '+p.comment:''}${bCount>0?' | bloqués: '+p.blockedAgents.join(', '):''}</div>`;
+      });
+      html+=`</td>`;
+    });
+    html+=`</tr>`;
+  });
+  const notesLines=[];
+  AGENTS.forEach(a=>{if(!agentNotes[a])return;DAYS.forEach(d=>{if(agentNotes[a][d])notesLines.push(`${a} · ${d} : ${agentNotes[a][d]}`);});});
+  html+=`</tbody></table>`;
+  if(notesLines.length>0){html+=`<div style="margin-top:10px;"><strong style="font-size:8px;">Notes agents</strong><ul style="margin:3px 0;padding-left:12px;">${notesLines.map(l=>`<li style="font-size:7px;color:#444;">${l}</li>`).join('')}</ul></div>`;}
+  html+=`<div class="footer">Généré le ${new Date().toLocaleDateString('fr-FR',{weekday:'long',year:'numeric',month:'long',day:'numeric'})}</div></body></html>`;
+  const wrap=document.createElement('div');wrap.innerHTML=html;document.body.appendChild(wrap);
+  html2pdf().set({margin:8,filename:`planning-${weekStr.replace(/[^a-z0-9]/gi,'-')}.pdf`,image:{type:'jpeg',quality:.98},html2canvas:{scale:2},jsPDF:{unit:'mm',format:'a4',orientation:'landscape'}}).from(wrap).save().then(()=>{document.body.removeChild(wrap);showToast('📄 PDF exporté !');});
+}
+
+// ============================================================
+// GESTION DES ACTIVITÉS PERSONNALISÉES
+// ============================================================
+function renderActivitiesList(){
+  const c=document.getElementById('activitiesList');
+  if(!c)return;
+  let h='';
+  ACTIVITIES.forEach((act,i)=>{
+    const color=ACT_COLORS_HEX[act]||'#888';
+    h+='<div class="activity-manage-row">';
+    h+='<div class="activity-manage-dot" style="background:'+color+'"></div>';
+    h+='<span class="activity-manage-name">'+act+'</span>';
+    h+='<button class="activity-manage-del" onclick="deleteActivity('+i+')" title="Supprimer">🗑</button>';
+    h+='</div>';
+  });
+  c.innerHTML=h||'<div style="font-size:.78rem;color:var(--text2);">Aucune activité.</div>';
+}
+function addActivity(){
+  const input=document.getElementById('newActivityInput');
+  const colorInput=document.getElementById('newActivityColor');
+  const name=input.value.trim();
+  if(!name){showToast('⚠ Saisissez un nom');return;}
+  if(ACTIVITIES.includes(name)){showToast('⚠ Cette activité existe déjà');return;}
+  ACTIVITIES.push(name);ACT_COLORS_HEX[name]=colorInput.value;
+  ensureActivityStyle(name,colorInput.value);
+  input.value='';saveWeekData();renderActivitiesList();updateAllActivitySelects();
+  showToast('✅ Activité "'+name+'" ajoutée');
+}
+function deleteActivity(i){
+  const name=ACTIVITIES[i];
+  if(!confirm("Supprimer l'activité \""+name+"\" ?\nLes blocs existants avec cette activité ne seront pas supprimés."))return;
+  ACTIVITIES.splice(i,1);saveWeekData();renderActivitiesList();updateAllActivitySelects();
+  showToast('🗑 Activité "'+name+'" supprimée');
+}
+function resetActivities(){
+  if(!confirm("Restaurer la liste d'activités par défaut ?"))return;
+  ACTIVITIES=[...ACTIVITIES_DEFAULT];saveWeekData();renderActivitiesList();updateAllActivitySelects();
+  showToast('↺ Liste restaurée');
+}
+function updateAllActivitySelects(){
+  const opts=ACTIVITIES.map(a=>'<option value="'+a+'">'+a+'</option>').join('');
+  ['editBlockActivity','blockActivity','ruleActivity'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el){const val=el.value;el.innerHTML=opts;if(ACTIVITIES.includes(val))el.value=val;}
+  });
+  renderLegend();
+}
+
+// ============================================================
+// TOAST
+// ============================================================
+function showToast(msg){
+  const c=document.getElementById('toastContainer');
+  const t=document.createElement('div');t.className='app-toast';t.textContent=msg;
+  c.appendChild(t);setTimeout(()=>t.remove(),3100);
+}
+
+
+// ============================================================
+// ADMIN — RÈGLES CONFIGURABLES
+// ============================================================
+function renderAdminRules(){
+  const c=document.getElementById('adminRulesList');
+  if(!fixedRules.length){c.innerHTML='<div style="font-size:.78rem;color:var(--text2);padding:8px;">Aucune règle. Ajoutez-en une ci-dessous.</div>';return;}
+  let h='';
+  fixedRules.forEach((r,i)=>{
+    const agDesc=r.agents&&r.agents.length?'Agents: '+r.agents.join(', '):"Toute l'équipe";
+    const minDesc=r.minAgents>0?' | Min '+r.minAgents+' agents':'';
+    h+=`<div class="rule-row ${r.enabled?'':'rule-disabled'}">
+      <input type="checkbox" class="rule-toggle" ${r.enabled?'checked':''} onchange="toggleRule(${i},this.checked)"/>
+      <div class="rule-info">
+        <div class="rule-name">${r.day} ${r.slot} — ${r.activity}</div>
+        <div class="rule-detail">${agDesc}${minDesc}${r.desc?' | '+r.desc:''}</div>
+      </div>
+      <button class="rule-edit-btn" onclick="openRuleEditModal(${i})">✏️</button>
+      <button class="rule-del" onclick="deleteRule(${i})">🗑</button>
+    </div>`;
+  });
+  c.innerHTML=h;
+}
+function toggleRule(i,v){fixedRules[i].enabled=v;saveWeekData();renderAdminRules();showToast(v?'✅ Règle activée':'⏸ Règle désactivée');}
+function deleteRule(i){if(!confirm('Supprimer cette règle ?'))return;fixedRules.splice(i,1);saveWeekData();renderAdminRules();showToast('🗑 Règle supprimée');}
+function openRuleEditModal(i){
+  const isNew=(i===null);
+  document.getElementById('ruleEditTitle').textContent=isNew?'➕ Nouvelle règle fixe':'✏️ Modifier la règle';
+  document.getElementById('ruleEditIdx').value=isNew?'':i;
+  const r=isNew?{day:'Lundi',slot:'Matin',activity:'CVM',agents:[],minAgents:0,desc:'',enabled:true}:fixedRules[i];
+  document.getElementById('ruleDay').value=r.day;
+  document.getElementById('ruleSlot').value=r.slot;
+  document.getElementById('ruleActivity').innerHTML=ACTIVITIES.map(a=>`<option value="${a}">${a}</option>`).join('');
+  document.getElementById('ruleActivity').value=r.activity;
+  document.getElementById('ruleMinAgents').value=r.minAgents||0;
+  document.getElementById('ruleDesc').value=r.desc||'';
+  const ac=document.getElementById('ruleAgentChecks');let h='';
+  AGENTS.forEach(a=>{
+    const chk=(r.agents||[]).includes(a);const col=AGENT_COLORS[a]||'#888';const init=a.substring(0,2).toUpperCase();
+    h+=`<div class="plage-agent-check-row ${chk?'is-blocked':''}" onclick="togglePlageAgentCheck(this)">
+      <input type="checkbox" data-agent="${a}" ${chk?'checked':''} onclick="event.stopPropagation();this.closest('.plage-agent-check-row').classList.toggle('is-blocked',this.checked)"/>
+      <div class="plage-agent-dot" style="background:${col}">${init}</div>
+      <span class="plage-agent-name">${a}</span>
+    </div>`;
+  });
+  ac.innerHTML=h;
+  document.getElementById('modalRuleEdit').style.display='flex';
+}
+function saveRuleEdit(){
+  const idxVal=document.getElementById('ruleEditIdx').value;
+  const isNew=(idxVal==='');
+  const agents=getCheckedBlockedAgents('ruleAgentChecks');
+  const existing=isNew?{}:(fixedRules[parseInt(idxVal)]||{});
+  const rule={
+    id:isNew?'r'+Date.now():(fixedRules[parseInt(idxVal)]||{}).id||('r'+Date.now()),
+    day:document.getElementById('ruleDay').value,
+    slot:document.getElementById('ruleSlot').value,
+    activity:document.getElementById('ruleActivity').value,
+    agents,minAgents:parseInt(document.getElementById('ruleMinAgents').value)||0,
+    desc:document.getElementById('ruleDesc').value.trim(),enabled:true,
+    nonBlocking:!!existing.nonBlocking
+  };
+  if(isNew)fixedRules.push(rule);else fixedRules[parseInt(idxVal)]=rule;
+  saveWeekData();renderAdminRules();closeModal('modalRuleEdit');
+  showToast(isNew?'➕ Règle ajoutée':'✏️ Règle mise à jour');
+}
+function openAdminModal(){
+  document.getElementById('adminTitleInput').value=appTitle;
+  renderAdminRules();showAdminTab('rules');
+  renderActivitiesList();updateAllActivitySelects();
+  document.getElementById('modalAdmin').style.display='flex';
+}
+function showAdminTab(t){
+  ['rules','title','export','activities'].forEach(tab=>{
+    const p=document.getElementById('adminTab'+tab.charAt(0).toUpperCase()+tab.slice(1));
+    if(p)p.style.display=(tab===t)?'block':'none';
+    const b=document.getElementById('aTab-'+tab);
+    if(b)b.classList.toggle('active',tab===t);
+  });
+}
+function saveAdminTitle(){
+  const v=(document.getElementById('adminTitleInput').value.trim())||DEFAULT_TITLE;
+  applyTitle(v);saveWeekData();showToast('✏️ Titre mis à jour');
+}
+function exportConfig(){
+  const cfg={appTitle,agents:AGENTS,colors:AGENT_COLORS,fixedRules,activities:ACTIVITIES,activityColors:ACT_COLORS_HEX};
+  const blob=new Blob([JSON.stringify(cfg,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='config-planning.json';a.click();
+  showToast('📥 Config exportée');
+}
+function importConfig(input){
+  const f=input.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=e=>{try{
+    const cfg=JSON.parse(e.target.result);
+    if(cfg.appTitle)applyTitle(cfg.appTitle);
+    if(cfg.agents){AGENTS=cfg.agents;AGENT_COLORS=cfg.colors||{};}
+    if(cfg.fixedRules)fixedRules=cfg.fixedRules;
+    if(cfg.activities)ACTIVITIES=cfg.activities;
+    if(cfg.activityColors)Object.assign(ACT_COLORS_HEX,cfg.activityColors);
+    ACTIVITIES.forEach(a=>ensureActivityStyle(a,ACT_COLORS_HEX[a]||'#888'));
+    presence={};AGENTS.forEach(a=>{presence[a]={};DAYS.forEach(d=>presence[a][d]=true);});
+    saveWeekData();renderAgents();renderAdminRules();renderActivitiesList();updateAllActivitySelects();
+    document.getElementById('adminTitleInput').value=appTitle;
+    showToast('📦 Config importée !');
+  }catch(err){showToast('⚠ Fichier invalide');}};r.readAsText(f);
+}
+function exportWeekJson(){
+  const data={weekLabel:formatWeekDisplay(currentWeekOffset),planningData,plageData,agentNotes,ferieData,presence};
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='semaine-planning.json';a.click();
+  showToast('📤 Semaine exportée');
+}
+function importWeekJson(input){
+  const f=input.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=e=>{try{
+    const d=JSON.parse(e.target.result);
+    planningData=d.planningData||{};plageData=d.plageData||{};agentNotes=d.agentNotes||{};ferieData=d.ferieData||{};
+    if(d.presence){presence=d.presence;AGENTS.forEach(a=>{if(!presence[a]){presence[a]={};DAYS.forEach(dy=>presence[a][dy]=true);}});}
+    saveWeekData();renderAll();showToast('📂 Semaine importée !');
+  }catch(err){showToast('⚠ Fichier invalide');}};r.readAsText(f);
+}
+
+// ============================================================
+// WIZARD PREMIER LANCEMENT
+// ============================================================
+let wizStep=1,wizAgents=[],wizRules=[];
+function openWizard(){
+  wizStep=1;wizAgents=AGENTS.map((a,i)=>({name:a,color:AGENT_COLORS[a]||COLOR_PALETTE[i%COLOR_PALETTE.length]}));
+  wizRules=[...DEFAULT_RULES.map(r=>({...r}))];
+  renderWizProgress();renderWizAgents();renderWizRules();
+  document.getElementById('wiz-title').value=appTitle;
+  document.getElementById('modalWizard').style.display='flex';
+}
+function renderWizProgress(){
+  const c=document.getElementById('wizardProgress');
+  let h='';for(let i=1;i<=3;i++)h+=`<div class="wizard-dot ${i<wizStep?'done':i===wizStep?'active':''}"></div>`;
+  c.innerHTML=h;
+  [1,2,3].forEach(s=>{const el=document.getElementById('wizardStep'+s);if(el)el.classList.toggle('active',s===wizStep);});
+}
+function wizNext(s){
+  if(s===2){const t=document.getElementById('wiz-title').value.trim();applyTitle(t||DEFAULT_TITLE);}
+  if(s===3){
+    const inputs=document.querySelectorAll('.wiz-agent-input');wizAgents=[];
+    inputs.forEach(inp=>{const n=inp.value.trim();if(n)wizAgents.push({name:n,color:inp.dataset.color||'#5a67f2'});});
+    if(!wizAgents.length){showToast('⚠ Ajoutez au moins un agent');return;}
+    renderWizRules();
+  }
+  wizStep=s;renderWizProgress();
+}
+function wizAddAgent(){const i=wizAgents.length%COLOR_PALETTE.length;wizAgents.push({name:'',color:COLOR_PALETTE[i]});renderWizAgents();}
+function renderWizAgents(){
+  const c=document.getElementById('wizAgentRows');if(!c)return;let h='';
+  wizAgents.forEach((ag,i)=>{
+    h+=`<div class="team-agent-row"><div class="team-agent-color" style=""><div style="width:100%;height:100%;border-radius:50%;background:${ag.color};"></div><input type="color" value="${ag.color}" oninput="wizAgents[${i}].color=this.value;this.previousElementSibling.style.background=this.value;"/></div>
+    <input class="team-agent-input wiz-agent-input" data-color="${ag.color}" type="text" value="${ag.name}" placeholder="Prénom…" oninput="wizAgents[${i}].name=this.value" maxlength="30"/>
+    <button class="team-del-btn" ${wizAgents.length>1?'':'disabled'} onclick="wizAgents.splice(${i},1);renderWizAgents()">🗑</button></div>`;
+  });c.innerHTML=h;
+}
+function wizAddRule(){wizRules.push({id:'r'+Date.now(),day:'Lundi',slot:'Matin',activity:'CVM',agents:[],minAgents:0,desc:'',enabled:true});renderWizRules();}
+function renderWizRules(){
+  const c=document.getElementById('wizRulesList');if(!c)return;
+  let h='';
+  wizRules.forEach((r,i)=>{
+    const actOpts=ACTIVITIES.map(a=>`<option ${r.activity===a?'selected':''}>${a}</option>`).join('');
+    const dayOpts=DAYS.map(d=>`<option ${r.day===d?'selected':''}>${d}</option>`).join('');
+    h+=`<div style="background:var(--surface2);border-radius:8px;padding:8px 10px;margin-bottom:6px;border:1.5px solid var(--border);">
+      <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:5px;">
+        <select style="flex:1;min-width:80px;border:1.5px solid var(--border);border-radius:6px;padding:4px 6px;font-family:Outfit,sans-serif;font-size:.76rem;background:var(--surface);" onchange="wizRules[${i}].day=this.value">${dayOpts}</select>
+        <select style="flex:1;min-width:80px;border:1.5px solid var(--border);border-radius:6px;padding:4px 6px;font-family:Outfit,sans-serif;font-size:.76rem;background:var(--surface);" onchange="wizRules[${i}].slot=this.value"><option ${r.slot==='Matin'?'selected':''}>Matin</option><option ${r.slot==='Après-midi'?'selected':''} value="Après-midi">Après-midi</option></select>
+        <select style="flex:2;min-width:120px;border:1.5px solid var(--border);border-radius:6px;padding:4px 6px;font-family:Outfit,sans-serif;font-size:.76rem;background:var(--surface);" onchange="wizRules[${i}].activity=this.value">${actOpts}</select>
+        <button style="border:none;background:#fff0f2;color:#c0293c;border-radius:5px;padding:3px 8px;cursor:pointer;font-size:.76rem;" onclick="wizRules.splice(${i},1);renderWizRules()">✕</button>
+      </div>
+      <input type="text" value="${r.desc||''}" placeholder="Description (optionnel)" style="width:100%;border:1.5px solid var(--border);border-radius:6px;padding:4px 8px;font-family:Outfit,sans-serif;font-size:.74rem;background:var(--surface);" oninput="wizRules[${i}].desc=this.value"/>
+    </div>`;
+  });c.innerHTML=h;
+}
+function wizFinish(){
+  if(!wizAgents.filter(a=>a.name).length){showToast('⚠ Ajoutez au moins un agent');return;}
+  AGENTS=wizAgents.filter(a=>a.name).map(a=>a.name);
+  wizAgents.filter(a=>a.name).forEach(a=>{AGENT_COLORS[a.name]=a.color;});
+  fixedRules=wizRules;
+  presence={};AGENTS.forEach(a=>{presence[a]={};DAYS.forEach(d=>presence[a][d]=true);});
+  saveWeekData();localStorage.setItem('ft-setup-done','1');
+  closeModal('modalWizard');renderAgents();renderAll();
+  showToast('🎉 Configuration enregistrée !');
+}
+
+// ============================================================
+// EASTER EGGS
+// ============================================================
+function initEasterEggs(){
+  // Logo click (5=quote)
+  const logo=document.getElementById('appLogo');
+  if(logo){
+    logo.addEventListener('click',function(){
+      logoClickCount++;
+      clearTimeout(logoClickTimer);
+      logoClickTimer=setTimeout(()=>logoClickCount=0,1400);
+      if(logoClickCount===5){logoClickCount=0;showQuoteToast();}
+    });
+  }
+  // Weekend banner: vendredi après 13h
+  const now=new Date();
+  if(now.getDay()===5&&now.getHours()>=13){
+    const banner=document.getElementById('weekendBanner');
+    if(banner){banner.style.display='flex';setTimeout(()=>banner.style.display='none',8000);}
+  }
+}
+function showQuoteToast(){
+  const q=EE_QUOTES[eeQuoteIdx%EE_QUOTES.length];eeQuoteIdx++;
+  const c=document.getElementById('toastContainer');
+  const t=document.createElement('div');t.className='app-toast toast-special';t.textContent=q;
+  c.appendChild(t);setTimeout(()=>t.remove(),5000);
+}
+function checkMarioEgg(name){
+  if(name.trim().toLowerCase()==='mario'){
+    setTimeout(()=>{
+      const c=document.getElementById('toastContainer');
+      const t=document.createElement('div');t.className='app-toast toast-special';
+      t.textContent='🍄 Mario a trouvé un champignon et gagne une vie supplémentaire !';
+      c.appendChild(t);setTimeout(()=>t.remove(),5000);
+    },400);
+  }
+}
+function checkPizzaEgg(titre){
+  if(titre.toLowerCase().includes('pizza'))showToast('🍕 Bonne idée pour la pause déjeuner !');
+}
+
+// ============================================================
+// MODAL CLOSE
+// ============================================================
+const MODALS=['modalNote','modalPlage','modalPlageEdit','modalTeam','modalAddBlock','modalHistory','modalEditBlock','modalTitle','modalAdmin','modalRuleEdit','modalWizard'];
+MODALS.forEach(id=>{
+  const el=document.getElementById(id);
+  if(el)el.addEventListener('click',function(e){if(e.target===this)closeModal(id);});
+});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')MODALS.forEach(id=>closeModal(id));});
+
+// ============================================================
+// INIT
+// ============================================================
+function init(){
+  initState();
+  applyTitle(appTitle);
+  updateWeekDisplay();
+  updateLockUI();
+  renderLegend();
+  renderFerieGrid();
+  updateHistorySelect();
+  renderAgents();
+  renderPlanning();
+  updateDashboard();
+  updateStatus();
+  initEasterEggs();
+  if(!localStorage.getItem('ft-setup-done')){
+    setTimeout(openWizard,400);
+  } else if(!Object.keys(planningData).length){
+    setTimeout(generatePlanning,200);
+  }
+}
+document.addEventListener('DOMContentLoaded',init);
+</script>
+<!-- MODAL ADMIN -->
+<div class="modal-overlay" id="modalAdmin" style="display:none;">
+  <div class="modal-box modal-box-xl">
+    <div class="modal-title">⚙️ Paramètres administrateur</div>
+    <div class="admin-tabs">
+      <button class="admin-tab-btn active" id="aTab-rules" onclick="showAdminTab('rules')">📋 Règles fixes</button>
+      <button class="admin-tab-btn" id="aTab-title" onclick="showAdminTab('title')">✏️ Titre</button>
+      <button class="admin-tab-btn" id="aTab-export" onclick="showAdminTab('export')">📦 Import/Export</button>
+      <button class="admin-tab-btn" id="aTab-activities" onclick="showAdminTab('activities')">🎯 Activités</button>
+    </div>
+    <div id="adminTabRules">
+      <div style="font-size:.76rem;color:var(--text2);margin-bottom:10px;line-height:1.5;">Règles appliquées à chaque génération. Les règles de votre équipe sont pré-chargées — modifiez-les librement.</div>
+      <div id="adminRulesList" style="max-height:340px;overflow-y:auto;margin-bottom:10px;"></div>
+      <button class="btn-app btn-secondary-app" style="width:100%;" onclick="openRuleEditModal(null)">＋ Ajouter une règle fixe</button>
+    </div>
+    <div id="adminTabTitle" style="display:none;">
+      <label class="modal-label">Titre de l'application</label>
+      <input class="modal-input" type="text" id="adminTitleInput" maxlength="60"/>
+      <div style="font-size:.7rem;color:var(--text2);margin-top:-4px;margin-bottom:8px;">Affiché dans l'onglet, les favoris et l'en-tête.</div>
+      <div class="modal-actions"><button class="btn-app btn-primary-app" onclick="saveAdminTitle()">Enregistrer</button></div>
+    </div>
+    <div id="adminTabExport" style="display:none;">
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div><label class="modal-label">Exporter configuration (équipe + règles + titre)</label>
+          <button class="btn-app btn-primary-app" style="width:100%;" onclick="exportConfig()">📥 Télécharger config (.json)</button></div>
+        <div><label class="modal-label">Importer une configuration</label>
+          <input type="file" id="importConfigFile" accept=".json" style="font-size:.8rem;width:100%;margin-bottom:5px;" onchange="importConfig(this)"/>
+          <div style="font-size:.69rem;color:var(--text2);">⚠ Remplace équipe, règles et titre actuels.</div></div>
+        <div><label class="modal-label">Exporter la semaine (.json)</label>
+          <button class="btn-app btn-secondary-app" style="width:100%;" onclick="exportWeekJson()">📤 Exporter semaine</button></div>
+        <div><label class="modal-label">Importer un planning de semaine</label>
+          <input type="file" id="importWeekFile" accept=".json" style="font-size:.8rem;width:100%;" onchange="importWeekJson(this)"/></div>
+      </div>
+    </div>
+    <div id="adminTabActivities" style="display:none;">
+      <div style="font-size:.76rem;color:var(--text2);margin-bottom:10px;">
+        Gérez la liste des activités disponibles dans le planning.
+      </div>
+      <div class="activities-list" id="activitiesList"></div>
+      <div style="display:flex;gap:7px;margin-top:8px;">
+        <input class="modal-input" type="text" id="newActivityInput" placeholder="Nom de la nouvelle activité…" style="margin-bottom:0;flex:1;"/>
+        <input class="modal-input" type="color" id="newActivityColor" value="#5a67f2" style="width:42px;padding:4px;margin-bottom:0;cursor:pointer;"/>
+        <button class="btn-app btn-primary-app" onclick="addActivity()">＋ Ajouter</button>
+      </div>
+      <div style="margin-top:8px;">
+        <button class="btn-app btn-secondary-app" style="font-size:.74rem;" onclick="resetActivities()">↺ Restaurer la liste par défaut</button>
+      </div>
+    </div>
+    <div class="modal-actions" style="margin-top:14px;"><button class="btn-app btn-secondary-app" onclick="closeModal('modalAdmin')">Fermer</button></div>
+  </div>
+</div>
+
+<!-- MODAL RULE EDIT -->
+<div class="modal-overlay" id="modalRuleEdit" style="display:none;">
+  <div class="modal-box">
+    <div class="modal-title" id="ruleEditTitle">➕ Nouvelle règle fixe</div>
+    <label class="modal-label">Jour</label>
+    <select class="modal-input" id="ruleDay"><option>Lundi</option><option>Mardi</option><option>Mercredi</option><option>Jeudi</option><option>Vendredi</option></select>
+    <label class="modal-label">Créneau</label>
+    <select class="modal-input" id="ruleSlot"><option value="Matin">Matin</option><option value="Après-midi">Après-midi</option></select>
+    <label class="modal-label">Activité</label>
+    <select class="modal-input" id="ruleActivity">
+      <option>A&amp;P</option><option>DYN / MER</option><option>CVM</option><option>Dossier transversal</option>
+      <option>Corner Essentiel</option><option>Permanence Visio</option><option>Back Office</option>
+      <option>Segmentation travail d'équipe</option><option>Collectif Visio</option><option>Collectif Physique</option><option>Libre</option>
+    </select>
+    <label class="modal-label">Agents concernés <span style="font-size:.68rem;color:var(--text2);font-weight:400;">(vide = toute l'équipe présente)</span></label>
+    <div id="ruleAgentChecks" class="plage-agents-list" style="margin-bottom:9px;"></div>
+    <label class="modal-label">Nombre minimum d'agents <span style="font-size:.68rem;color:var(--text2);font-weight:400;">(0 = tous)</span></label>
+    <input class="modal-input" type="number" id="ruleMinAgents" min="0" max="10" value="0"/>
+    <label class="modal-label">Description courte</label>
+    <input class="modal-input" type="text" id="ruleDesc" placeholder="ex: Réunion d'équipe obligatoire"/>
+    <input type="hidden" id="ruleEditIdx"/>
+    <div class="modal-actions">
+      <button class="btn-app btn-secondary-app" onclick="closeModal('modalRuleEdit')">Annuler</button>
+      <button class="btn-app btn-primary-app" onclick="saveRuleEdit()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL WIZARD PREMIER LANCEMENT -->
+<div class="modal-overlay" id="modalWizard" style="display:none;">
+  <div class="modal-box modal-box-lg">
+    <div class="wizard-progress" id="wizardProgress"></div>
+    <div id="wizardStep1" class="wizard-step active">
+      <div class="wizard-header"><span class="wizard-icon">👋</span><div class="wizard-title">Bienvenue dans Planning Équipe Essentiel</div><div class="wizard-sub">Configurez votre outil en 3 étapes rapides.<br>Vous pourrez tout modifier à tout moment via ⚙️ Admin.</div></div>
+      <label class="modal-label">Nom de votre équipe / application</label>
+      <input class="modal-input" type="text" id="wiz-title" placeholder="Planning Équipe Essentiel" maxlength="60"/>
+      <div class="modal-actions"><button class="btn-app btn-primary-app" onclick="wizNext(2)">Suivant →</button></div>
+    </div>
+    <div id="wizardStep2" class="wizard-step">
+      <div class="wizard-header"><span class="wizard-icon">👥</span><div class="wizard-title">Votre équipe</div><div class="wizard-sub">Saisissez les prénoms de vos agents.</div></div>
+      <div id="wizAgentRows"></div>
+      <button class="add-agent-btn" onclick="wizAddAgent()">＋ Ajouter un agent</button>
+      <div class="modal-actions" style="margin-top:12px;">
+        <button class="btn-app btn-secondary-app" onclick="wizNext(1)">← Retour</button>
+        <button class="btn-app btn-primary-app" onclick="wizNext(3)">Suivant →</button>
+      </div>
+    </div>
+    <div id="wizardStep3" class="wizard-step">
+      <div class="wizard-header"><span class="wizard-icon">📋</span><div class="wizard-title">Règles fixes de votre équipe</div><div class="wizard-sub">Définissez les créneaux obligatoires. Les règles de l'équipe Essentiel sont pré-chargées.</div></div>
+      <div id="wizRulesList" style="max-height:260px;overflow-y:auto;margin-bottom:8px;"></div>
+      <button class="add-agent-btn" style="border-color:var(--accent2);color:var(--accent2);" onclick="wizAddRule()">＋ Ajouter une règle</button>
+      <div class="modal-actions" style="margin-top:12px;">
+        <button class="btn-app btn-secondary-app" onclick="wizNext(2)">← Retour</button>
+        <button class="btn-app btn-success-app" onclick="wizFinish()">✓ Commencer !</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
