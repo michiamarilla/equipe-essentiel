@@ -575,13 +575,13 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-
 // console.firebase.google.com → votre projet → ⚙️ → Config app web
 // ============================================================
 const FIREBASE_CONFIG = {
-  apiKey:            "AIza...",          // ← votre vraie clé
-  authDomain:        "monprojet.firebaseapp.com",
-  databaseURL:       "https://monprojet-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId:         "monprojet",
-  storageBucket:     "monprojet.appspot.com",
-  messagingSenderId: "123456789",
-  appId:             "1:123...:web:abc..."
+  apiKey:            "VOTRE_API_KEY",
+  authDomain:        "VOTRE_PROJET.firebaseapp.com",
+  databaseURL:       "https://VOTRE_PROJET-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId:         "VOTRE_PROJET",
+  storageBucket:     "VOTRE_PROJET.appspot.com",
+  messagingSenderId: "VOTRE_SENDER_ID",
+  appId:             "VOTRE_APP_ID"
 };
 
 let db = null;
@@ -782,12 +782,36 @@ async function initState(){
   loadPlannedAbsences(); loadTemplate(); loadChangeLog();
   const sw = localStorage.getItem('ft-week');
   currentWeekOffset = sw ? parseInt(sw) : 0;
+
+  // ⚡ Si Firebase n'est pas encore configuré (valeurs placeholder) → mode local uniquement
+  const fbReady = FIREBASE_CONFIG.apiKey
+    && !FIREBASE_CONFIG.apiKey.includes('VOTRE')
+    && !FIREBASE_CONFIG.apiKey.includes('YOUR');
+
+  if (!fbReady) {
+    // Mode hors-ligne / non configuré → lecture localStorage classique
+    const si = document.getElementById('syncIndicator');
+    if (si) { si.textContent = '💾 Mode local'; si.className = 'sync-indicator sync-err'; }
+    _loadConfigFromLS();
+    _initPresence();
+    applyPlannedAbsencesForCurrentWeek();
+    return;
+  }
+
   const si = document.getElementById('syncIndicator');
   if (si) { si.textContent = '⏳ Chargement…'; si.className = 'sync-indicator sync-loading'; }
+
+  // Timeout de sécurité : si Firebase ne répond pas en 6s → bascule sur localStorage
+  const withTimeout = (promise, ms = 6000) => Promise.race([
+    promise,
+    new Promise((_, rej) => setTimeout(() => rej(new Error('Firebase timeout')), ms))
+  ]);
+
   const fbOk = initFirebase();
   if (fbOk && db) {
     try {
-      const cfgSnap = await db.ref('planning/config').get();
+      // Charger config
+      const cfgSnap = await withTimeout(db.ref('planning/config').get());
       if (cfgSnap.exists()) {
         const cfg = cfgSnap.val();
         if (cfg.appTitle) appTitle = cfg.appTitle;
@@ -797,9 +821,13 @@ async function initState(){
         if (cfg.activityColors) Object.assign(ACT_COLORS_HEX, cfg.activityColors);
         ACTIVITIES.forEach(a => ensureActivityStyle(a, ACT_COLORS_HEX[a]||'#888'));
       } else { _loadConfigFromLS(); }
-      const weeksSnap = await db.ref('planning/weeks').get();
+
+      // Charger historique des semaines
+      const weeksSnap = await withTimeout(db.ref('planning/weeks').get());
       if (weeksSnap.exists()) planningHistory = weeksSnap.val() || {};
-      const wSnap = await db.ref('planning/weeks/' + getWeekKey(currentWeekOffset)).get();
+
+      // Charger semaine courante
+      const wSnap = await withTimeout(db.ref('planning/weeks/' + getWeekKey(currentWeekOffset)).get());
       if (wSnap.exists()) {
         const w = wSnap.val();
         planningData = w.planningData||{}; plageData = w.plageData||{};
@@ -810,9 +838,18 @@ async function initState(){
           AGENTS.forEach(a => { if(!presence[a]){presence[a]={};DAYS.forEach(d=>presence[a][d]=true);} });
         } else { _initPresence(); }
       } else { _initPresence(); }
+
       listenToCurrentWeek();
-    } catch(e) { console.error(e); _loadConfigFromLS(); _initPresence(); }
-  } else { _loadConfigFromLS(); _initPresence(); }
+    } catch(e) {
+      console.error('Firebase erreur/timeout:', e.message);
+      updateSyncUI(false);
+      _loadConfigFromLS();
+      _initPresence();
+    }
+  } else {
+    _loadConfigFromLS();
+    _initPresence();
+  }
   applyPlannedAbsencesForCurrentWeek();
 }
 function _loadConfigFromLS(){
@@ -2112,20 +2149,7 @@ function runPdfExport(pagesHtml,filename){
   const css=`<style>body{font-family:Arial,sans-serif;font-size:10px;color:#1a1d2e;}.page{padding:0;}.footer{margin-top:10px;color:#aaa;font-size:7px;text-align:right;}</style>`;
   const footer=`<div class="footer">Généré le ${new Date().toLocaleDateString('fr-FR',{weekday:'long',year:'numeric',month:'long',day:'numeric'})}</div>`;
   const body=pagesHtml.map((p,i)=>`<div class="page"${i>0?' style="page-break-before:always;"':''}>${p}${footer}</div>`).join('');
-  const fullHtml=`<html><head>${css}</head><body>${body}<!-- MODAL NOM UTILISATEUR -->
-<div class="modal-overlay" id="modalUserName" style="display:none;">
-  <div class="modal-box">
-    <div class="modal-title">👤 Bienvenue !</div>
-    <div style="font-size:.82rem;color:var(--text2);margin-bottom:12px;line-height:1.5;">Indiquez votre prénom pour que vos collègues sachent qui modifie le planning.</div>
-    <label class="modal-label">Votre prénom</label>
-    <input class="modal-input" type="text" id="userNameInput" placeholder="ex: Michelle…" maxlength="30"/>
-    <div class="modal-actions">
-      <button class="btn-app btn-primary-app" onclick="saveUserName()">✓ Commencer</button>
-    </div>
-  </div>
-</div>
-
-</body></html>`;
+  const fullHtml=`<html><head>${css}</head><body>${body}</body></html>`;
   const wrap=document.createElement('div');wrap.innerHTML=fullHtml;document.body.appendChild(wrap);
   html2pdf().set({margin:8,filename:`${filename}-${weekStr.replace(/[^a-z0-9]/gi,'-')}.pdf`,image:{type:'jpeg',quality:.98},html2canvas:{scale:2},jsPDF:{unit:'mm',format:'a4',orientation:'landscape'}}).from(wrap).save().then(()=>{document.body.removeChild(wrap);showToast('📄 PDF exporté !');});
 }
@@ -3292,6 +3316,19 @@ document.addEventListener('DOMContentLoaded',init);
         <button class="btn-app btn-secondary-app" onclick="wizNext(2)">← Retour</button>
         <button class="btn-app btn-success-app" onclick="wizFinish()">✓ Commencer !</button>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL NOM UTILISATEUR -->
+<div class="modal-overlay" id="modalUserName" style="display:none;">
+  <div class="modal-box">
+    <div class="modal-title">👤 Bienvenue !</div>
+    <div style="font-size:.82rem;color:var(--text2);margin-bottom:12px;line-height:1.5;">Indiquez votre prénom pour que vos collègues sachent qui modifie le planning.</div>
+    <label class="modal-label">Votre prénom</label>
+    <input class="modal-input" type="text" id="userNameInput" placeholder="ex: Michelle…" maxlength="30"/>
+    <div class="modal-actions">
+      <button class="btn-app btn-primary-app" onclick="saveUserName()">✓ Commencer</button>
     </div>
   </div>
 </div>
