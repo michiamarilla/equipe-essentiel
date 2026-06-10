@@ -533,15 +533,24 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-
 // Remplacez les valeurs par celles de votre projet Firebase
 // console.firebase.google.com → votre projet → ⚙️ → Config app web
 // ============================================================
-const FIREBASE_CONFIG = {
-  apiKey:            "VOTRE_API_KEY",
-  authDomain:        "VOTRE_PROJET.firebaseapp.com",
-  databaseURL:       "https://VOTRE_PROJET-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId:         "VOTRE_PROJET",
-  storageBucket:     "VOTRE_PROJET.appspot.com",
-  messagingSenderId: "VOTRE_SENDER_ID",
-  appId:             "VOTRE_APP_ID"
+// Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
+
+// Your web app's Firebase configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyD2Tu0kEgEc_uEy1HFomB-UTn113g0wYrM",
+  authDomain: "planning-essentiel.firebaseapp.com",
+  databaseURL: "https://planning-essentiel-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "planning-essentiel",
+  storageBucket: "planning-essentiel.firebasestorage.app",
+  messagingSenderId: "678271418423",
+  appId: "1:678271418423:web:e5bd987a4c5f8c5178bfb2"
 };
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
 
 let db = null;
 let _fbSaving = false;
