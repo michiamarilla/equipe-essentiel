@@ -1,0 +1,44 @@
+📅
+Planning Équipe Essentiel
+⏳ Connexion… 👤
+—
+🔓
+Non verrouillé
+👥
+Équipe
+🚧
+Plage
+🔄
+Actualiser
+⚡
+Générer
+📄
+PDF
+⚙️
+Admin
+Semaine
+‹
+—
+› Semaine actuelle
+    📂 Historique…
+  
+🗂 Gérer historique
+AGENTS
+Tout basculer
+
+JOURS FÉRIÉS
+DASHBOARD
+5
+Présents
+0
+Couvertes
+0
+Non couv.
+0%
+Couverture
+CONFORMITÉ
+
+LÉGENDE
+
+Plage contrainte
+
