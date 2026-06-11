@@ -10,6 +10,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <style>
 :root{--bg:#f5f6fa;--surface:#ffffff;--surface2:#f0f1f7;--border:#e4e6f0;--accent:#5a67f2;--accent2:#38c8a8;--accent3:#f5a623;--accent4:#e8445a;--plage:#ff9f43;--text:#1a1d2e;--text2:#6b7099;--shadow:0 2px 12px rgba(90,103,242,0.08);--shadow-md:0 4px 24px rgba(90,103,242,0.13);}
 *{box-sizing:border-box;margin:0;padding:0;}
@@ -345,10 +346,11 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-
   <div class="header-actions">
     <div id="syncIndicator" class="sync-indicator sync-loading">⏳ Connexion…</div>
     <div class="user-name-chip" onclick="openUserNameModal()" title="Votre prénom">👤 <span id="userNameDisplay">—</span></div>
-    <div id="lockBadge" class="lock-badge unlocked" onclick="toggleLock()">🔓 <span id="lockLabel">Non verrouillé</span></div>
-    <button class="btn-app btn-team-app" onclick="openTeamModal()"><span>👥</span><span class="btn-label">Équipe</span></button>
+    <div id="modeBadge" class="lock-badge unlocked" onclick="isEditMode?toggleLock():openEditPinModal()" style="cursor:pointer;">
+      <span id="modeIcon">👁</span> <span id="modeLabel">Visiteur</span>
+    </div>
+    <div id="lockBadge" class="lock-badge unlocked" onclick="toggleLock()" style="display:none;">🔓 <span id="lockLabel">Non verrouillé</span></div>
     <button class="btn-app btn-plage-app" onclick="openAddPlageModal()"><span>🚧</span><span class="btn-label">Plage</span></button>
-    <button class="btn-app btn-refresh-app" onclick="refreshPlanning()"><span>🔄</span><span class="btn-label">Actualiser</span></button>
     <button class="btn-app btn-primary-app" onclick="generatePlanning()"><span>⚡</span><span class="btn-label">Générer</span></button>
     <button class="btn-app btn-success-app" onclick="exportPDF()"><span>📄</span><span class="btn-label">PDF</span></button>
     <button class="btn-app btn-admin-app" onclick="openAdminModal()"><span>⚙️</span><span class="btn-label">Admin</span></button>
@@ -367,6 +369,7 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-
     <option value="">📂 Historique…</option>
   </select>
   <button class="btn-app btn-secondary-app" style="font-size:0.76rem;padding:5px 10px;" onclick="openHistoryModal()">🗂 Gérer historique</button>
+  <div id="onlineUsersBar" style="display:none;align-items:center;gap:6px;flex-wrap:wrap;margin-left:auto;"></div>
 </div>
 
 <div class="app-body">
@@ -560,19 +563,7 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-
   </div>
 </div>
 
-<!-- MODAL TITLE -->
-<div class="modal-overlay" id="modalTitle" style="display:none;">
-  <div class="modal-box">
-    <div class="modal-title">✏️ Titre de l'application</div>
-    <label class="modal-label">Nom affiché dans l'onglet, les favoris et l'en-tête</label>
-    <input class="modal-input" type="text" id="titleInput" maxlength="60" placeholder="Planning Équipe Essentiel"/>
-    <div style="font-size:0.72rem;color:var(--text2);margin-top:-5px;margin-bottom:8px;">Ce titre est sauvegardé localement et persistera à chaque ouverture.</div>
-    <div class="modal-actions">
-      <button class="btn-app btn-secondary-app" onclick="closeModal('modalTitle')">Annuler</button>
-      <button class="btn-app btn-primary-app" onclick="saveAppTitle()">Enregistrer</button>
-    </div>
-  </div>
-</div>
+
 
 <script>
 // ============================================================
@@ -596,12 +587,23 @@ let _fbSaving = false;
 let _fbWeekRef = null;
 let _fbWeekKey = null;
 let userName = localStorage.getItem('ft-user-name') || '';
+let isEditMode=false; // false=visiteur, true=éditeur
+const EDIT_SESSION_KEY='ft-edit-session';
 
 function initFirebase() {
   try {
     firebase.initializeApp(FIREBASE_CONFIG);
     db = firebase.database();
-    db.ref('.info/connected').on('value', snap => updateSyncUI(snap.val() === true ? 'ok' : 'err'));
+    // Connexion anonyme automatique pour sécuriser les règles Firebase
+    firebase.auth().signInAnonymously()
+      .then(() => {
+        db.ref('.info/connected').on('value', snap => updateSyncUI(snap.val() === true ? 'ok' : 'err'));
+      })
+      .catch(e => {
+        console.error('Auth anonyme échouée:', e);
+        // Fallback: essayer quand même sans auth (si règles encore ouvertes)
+        db.ref('.info/connected').on('value', snap => updateSyncUI(snap.val() === true ? 'ok' : 'err'));
+      });
     return true;
   } catch(e) { console.error('Firebase init error:', e); updateSyncUI('err'); return false; }
 }
@@ -693,19 +695,27 @@ async function fbSaveWeek() {
   localStorage.setItem('ft-activities',      JSON.stringify(ACTIVITIES));
   localStorage.setItem('ft-activity-colors', JSON.stringify(ACT_COLORS_HEX));
   localStorage.setItem('ft-title',           appTitle);
-  if (db) {
-    _fbSaving = true;
+  if(db){
+    _fbSaving=true;
     updateSyncUI('saving');
-    try {
-      await db.ref('planning/weeks/' + key).set(weekData);
-      await db.ref('planning/config').set(configData);
+    try{
+      // Sanitize: remove undefined values
+      const clean=obj=>JSON.parse(JSON.stringify(obj,(k,v)=>v===undefined?null:v));
+      await db.ref('planning/weeks/'+key).set(clean(weekData));
+      await db.ref('planning/config').set(clean(configData));
       updateSyncUI('ok');
-    } catch(e) {
-      console.error('Firebase save error:', e);
+    }catch(e){
+      console.error('Firebase save error:',e);
       updateSyncUI('err');
-      showToast('⚠️ Erreur de synchronisation');
-    } finally {
-      setTimeout(() => { _fbSaving = false; }, 400);
+      // Don't show toast on every error — only after 3 consecutive failures
+      if(!fbSaveWeek._failCount)fbSaveWeek._failCount=0;
+      fbSaveWeek._failCount++;
+      if(fbSaveWeek._failCount>=3){
+        showToast('⚠️ Synchronisation impossible — vérifiez votre connexion');
+        fbSaveWeek._failCount=0;
+      }
+    }finally{
+      setTimeout(()=>{_fbSaving=false;},400);
     }
   }
 }
@@ -722,14 +732,15 @@ function saveUserName() {
   localStorage.setItem('ft-user-name', v);
   document.getElementById('userNameDisplay').textContent = v;
   closeModal('modalUserName');
+  updateOnlineStatus();initOnlinePresence();
   showToast('👤 Bonjour ' + v + ' !');
 }
 
 // ============================================================
 // CONSTANTS
 // ============================================================
-const AGENTS_DEFAULT=['Selim','Marvin','Michelle','Charlotte','Emilien'];
-const AGENT_COLORS_DEFAULT={Selim:'#5a67f2',Marvin:'#38c8a8',Michelle:'#f5a623',Charlotte:'#e8445a',Emilien:'#7c5cbf'};
+const AGENTS_DEFAULT=['Selim','Michelle','Charlotte','Emilien','Jordan'];
+const AGENT_COLORS_DEFAULT={Selim:'#5a67f2',Michelle:'#f5a623',Charlotte:'#e8445a',Emilien:'#7c5cbf',Jordan:'#20b2aa'};
 const COLOR_PALETTE=['#5a67f2','#38c8a8','#f5a623','#e8445a','#7c5cbf','#20b2aa','#e07b50','#3a9bd5','#c06080','#60a060'];
 const ACTIVITIES_DEFAULT=['A&P','DYN / MER','CVM','Dossier transversal','Corner Essentiel','Permanence Visio','Back Office',"Segmentation travail d'équipe",'Collectif Visio','Collectif Physique','Libre','Jeudi de la collab'];
 let ACTIVITIES=[...ACTIVITIES_DEFAULT];
@@ -737,7 +748,23 @@ const ACT_CLASS={'A&P':'act-ap','DYN / MER':'act-dyn','CVM':'act-cvm','Dossier t
 const ACT_COLORS_HEX={'A&P':'#3355cc','DYN / MER':'#b85c00','CVM':'#8833bb','Dossier transversal':'#1a7a58','Corner Essentiel':'#886600','Permanence Visio':'#1155aa','Back Office':'#5533aa',"Segmentation travail d'équipe":'#007755','Collectif Visio':'#aa2266','Collectif Physique':'#aa5500','Libre':'#555','Jeudi de la collab':'#9b59b6'};
 const DAYS=['Lundi','Mardi','Mercredi','Jeudi','Vendredi'];
 const SLOTS=['Matin','Après-midi'];
-const DEFAULT_TITLE='Planning Équipe Essentiel';
+// Règle temps partiel Charlotte
+const PARTIAL_TIME_RULES=[
+  {agent:'Charlotte',day:'Mardi',matin:true,apm:false},
+  {agent:'Charlotte',day:'Mercredi',matin:false,apm:false},
+  {agent:'Charlotte',day:'Vendredi',matin:false,apm:false}
+];
+function applyPartialTimeRules(){
+  PARTIAL_TIME_RULES.forEach(r=>{
+    if(!presence[r.agent])return;
+    if(!presence[r.agent][r.day]||typeof presence[r.agent][r.day]!=='object'){
+      presence[r.agent][r.day]={matin:true,apm:true};
+    }
+    presence[r.agent][r.day].matin=r.matin;
+    presence[r.agent][r.day].apm=r.apm;
+  });
+}
+const DEFAULT_TITLE='Planning Équipe Essentiel Digne - Sisteron';
 
 // ============================================================
 // RÈGLES FIXES CONFIGURABLES
@@ -818,6 +845,7 @@ async function initState(){
     updateSyncUI('local');
     _loadConfigFromLS();
     _initPresence();
+    applyPartialTimeRules();
     return;
   }
 
@@ -857,7 +885,7 @@ async function initState(){
           AGENTS.forEach(a => { if(!presence[a]){presence[a]={};DAYS.forEach(d=>presence[a][d]=true);} });
         } else { _initPresence(); }
       } else { _initPresence(); }
-
+      applyPartialTimeRules();
       listenToCurrentWeek();
     } catch(e) {
       console.error('Firebase erreur:', e.message);
@@ -890,6 +918,7 @@ function _loadConfigFromLS(){
       else{DAYS.forEach(d=>{if(presence[a][d]===undefined)presence[a][d]={matin:true,apm:true};});}
     });
   } else { _initPresence(); }
+  applyPartialTimeRules();
   const wl=localStorage.getItem('ft-workLocation');
   if(wl){try{workLocation=JSON.parse(wl);}catch(e){workLocation={};}}
 
@@ -901,8 +930,9 @@ function _loadConfigFromLS(){
   }
 }
 function _initPresence(){
-  presence={};
+  presence={};workLocation={};
   AGENTS.forEach(a=>{presence[a]={};DAYS.forEach(d=>presence[a][d]={matin:true,apm:true});});
+  applyPartialTimeRules();
 }
 
 function loadWeekData(offset){
@@ -987,6 +1017,7 @@ function changeWeek(dir){
     agentNotes=w.agentNotes||{};ferieData=w.ferieData||{};locked=!!w.locked;
     if(w.presence){presence=w.presence;AGENTS.forEach(a=>{if(!presence[a]){presence[a]={};DAYS.forEach(d=>presence[a][d]=true);}});}
   }
+  applyPartialTimeRules();
   updateWeekDisplay();updateLockUI();renderAll();
   listenToCurrentWeek();
 }
@@ -1001,6 +1032,7 @@ function goToCurrentWeek(){
     agentNotes=w.agentNotes||{};ferieData=w.ferieData||{};locked=!!w.locked;
     if(w.presence){presence=w.presence;AGENTS.forEach(a=>{if(!presence[a]){presence[a]={};DAYS.forEach(d=>presence[a][d]=true);}});}
   }
+  applyPartialTimeRules();
   updateWeekDisplay();updateLockUI();renderAll();
   listenToCurrentWeek();
 }
@@ -1031,9 +1063,20 @@ function loadFromHistory(key){
 // ============================================================
 function toggleLock(){locked=!locked;saveWeekData();updateLockUI();renderPlanning();showToast(locked?'🔒 Verrouillé':'🔓 Déverrouillé');}
 function updateLockUI(){
-  const b=document.getElementById('lockBadge');const l=document.getElementById('lockLabel');
-  if(locked){b.className='lock-badge locked';l.textContent='Verrouillé';}
-  else{b.className='lock-badge unlocked';l.textContent='Non verrouillé';}
+  const modeBadge=document.getElementById('modeBadge');
+  const lockBadge=document.getElementById('lockBadge');
+  const modeIcon=document.getElementById('modeIcon');
+  const modeLabel=document.getElementById('modeLabel');
+  const lockLabel=document.getElementById('lockLabel');
+  if(isEditMode){
+    if(modeBadge){modeBadge.className='lock-badge unlocked';modeIcon.textContent='✏️';modeLabel.textContent='Éditeur';}
+    if(lockBadge){lockBadge.style.display='inline-flex';}
+    if(locked){lockBadge.className='lock-badge locked';lockLabel.textContent='Verrouillé';}
+    else{lockBadge.className='lock-badge unlocked';lockLabel.textContent='Non verrouillé';}
+  } else {
+    if(modeBadge){modeBadge.className='lock-badge';modeBadge.style.background='#f0f0f8';modeBadge.style.color='#6b7099';modeBadge.style.border='1.5px solid #e4e6f0';modeIcon.textContent='👁';modeLabel.textContent='Visiteur — Cliquer pour éditer';}
+    if(lockBadge){lockBadge.style.display='none';}
+  }
 }
 
 // ============================================================
@@ -1120,7 +1163,7 @@ function getHalfDay(agent,day){
   return {matin:true,apm:true};
 }
 function setHalfDay(agent,day,half,val){
-  if(locked){showToast('🔒 Planning verrouillé');return;}
+  if(!canEdit())return;
   if(!presence[agent])presence[agent]={};
   const cur=getHalfDay(agent,day);
   cur[half]=val;
@@ -1164,7 +1207,7 @@ function getManualSlotItems(day,slot,blocked){
 }
 
 function generatePlanning(message='⚡ Planning généré'){
-  if(locked){showToast('🔒 Planning verrouillé');return;}
+  if(!canEdit())return;
   cvmRotationIdx=0;
   const newPlan={};const dynCount={};
   AGENTS.forEach(a=>dynCount[a]=0);
@@ -1287,7 +1330,7 @@ function generatePlanning(message='⚡ Planning généré'){
 // REFRESH (recalculate without full reset)
 // ============================================================
 function refreshPlanning(){
-  if(locked){showToast('🔒 Planning verrouillé');return;}
+  if(!canEdit())return;
   generatePlanning('🔄 Planning actualisé autour des blocs manuels');
 }
 
@@ -1330,7 +1373,7 @@ function getCheckedBlockedAgents(containerId){
 }
 
 function openAddPlageModal(day,slot){
-  if(locked){showToast('🔒 Planning verrouillé');return;}
+  if(!canEdit())return;
   if(day)document.getElementById('plageDay').value=day;
   if(slot)document.getElementById('plageSlot').value=slot;
   document.getElementById('plageTitre').value='';
@@ -1416,7 +1459,7 @@ function savePlage(){
 }
 
 function deletePlage(day,slot,idx){
-  if(locked){showToast('🔒 Planning verrouillé');return;}
+  if(!canEdit())return;
   const hadBlocked=(plageData[day][slot][idx].blockedAgents||[]).length>0;
   plageData[day][slot].splice(idx,1);
   if(hadBlocked) recomputeSlot(day, slot);
@@ -1425,7 +1468,7 @@ function deletePlage(day,slot,idx){
 }
 
 function editPlage(day,slot,idx){
-  if(locked){showToast('🔒 Planning verrouillé');return;}
+  if(!canEdit())return;
   const p=plageData[day][slot][idx];
   const sel=document.getElementById('plageEditAgent');
   sel.innerHTML='<option value="">— Toute l\'équipe —</option>'+AGENTS.map(a=>`<option value="${a}" ${p.agent===a?'selected':''}>${a}</option>`).join('');
@@ -1458,7 +1501,7 @@ function savePlageEdit(){
 // NOTES
 // ============================================================
 function openNoteModal(agent,day){
-  if(locked){showToast('🔒 Planning verrouillé');return;}
+  if(!canEdit())return;
   _noteTarget={agent,day};
   document.getElementById('noteAgentName').textContent=agent+(day?' – '+day:'');
   const cur=(agentNotes[agent]&&agentNotes[agent][day])?agentNotes[agent][day]:'';
@@ -1537,7 +1580,7 @@ function renderPlanning(){
           const locBadge=loc==='tt'?'<span style="font-size:0.48rem;background:#5a67f2;color:#fff;border-radius:3px;padding:0 3px;margin-left:2px;font-weight:700;">TT</span>':loc==='agence'?'<span style="font-size:0.48rem;background:#38c8a8;color:#fff;border-radius:3px;padding:0 3px;margin-left:2px;font-weight:700;">AG</span>':'';
           const hasNote=note.length>0;
           const isPlageBlocked=note.includes('Plage contrainte');
-          const draggable=!locked?'':'data-nodrag="1"';
+          const draggable=(isEditMode&&!locked)?'':'data-nodrag="1"';
           html+=`<div class="activity-card ${actClass}" data-day="${day}" data-slot="${slot}" data-idx="${idx2}" ${draggable}>
             <div class="card-left">
               <div class="card-agent-dot" style="background:${agentColor}">${initials}</div>
@@ -1547,10 +1590,10 @@ function renderPlanning(){
               </div>
             </div>
             <div class="card-right">
-              ${!locked?`<button class="note-btn ${hasNote?'has-note':''}" onclick="event.stopPropagation();openNoteModal('${item.agent}','${day}')" title="Note">💬</button>`:''}
-              ${!locked?`<button class="edit-card-btn" onclick="event.stopPropagation();openEditBlockModal('${day}','${slot}',${idx2})" title="Modifier">✏️</button>`:''}
-              ${!locked?`<button class="del-card-btn" onclick="event.stopPropagation();deleteBlock('${day}','${slot}',${idx2})" title="Supprimer">✕</button>`:''}
-              ${locked?'<span class="lock-icon">🔒</span>':''}
+              ${(isEditMode&&!locked)?`<button class="note-btn ${hasNote?'has-note':''}" onclick="event.stopPropagation();openNoteModal('${item.agent}','${day}')" title="Note">💬</button>`:''}
+              ${(isEditMode&&!locked)?`<button class="edit-card-btn" onclick="event.stopPropagation();openEditBlockModal('${day}','${slot}',${idx2})" title="Modifier">✏️</button>`:''}
+              ${(isEditMode&&!locked)?`<button class="del-card-btn" onclick="event.stopPropagation();deleteBlock('${day}','${slot}',${idx2})" title="Supprimer">✕</button>`:''}
+              ${(!isEditMode||locked)?'<span class="lock-icon">🔒</span>':''}
             </div>
             ${hasNote?`<div class="note-tooltip">${note.replace(/</g,'&lt;')}</div>`:''}
           </div>`;
@@ -1561,7 +1604,7 @@ function renderPlanning(){
           html+=`<div class="plage-card" data-plage="1">
             <div class="plage-header">
               <div class="plage-title">🚧 ${p.titre.replace(/</g,'&lt;')}</div>
-              ${!locked?`<div style="display:flex;gap:2px;">
+              ${(isEditMode&&!locked)?`<div style="display:flex;gap:2px;">
                 <button class="plage-edit" onclick="event.stopPropagation();editPlage('${day}','${slot}',${pi})">✏️</button>
                 <button class="plage-del" onclick="event.stopPropagation();deletePlage('${day}','${slot}',${pi})">✕</button>
               </div>`:'<span class="lock-icon">🔒</span>'}
@@ -1571,7 +1614,7 @@ function renderPlanning(){
             ${p.agent?`<div style="font-size:0.66rem;color:#a05010;margin-top:2px;">👤 ${p.agent}</div>`:''}
           </div>`;
         });
-        if(!locked){
+        if(isEditMode&&!locked){
           html+=`<button class="add-plage-btn" onclick="openAddPlageModal('${day}','${slot}')">＋ Plage</button>`;
           html+=`<button class="add-block-btn" onclick="openAddBlockModal('${day}','${slot}')">＋ Bloc</button>`;
         }
@@ -1583,7 +1626,7 @@ function renderPlanning(){
   });
   html+=`</tbody></table>`;
   container.innerHTML=html;
-  if(!locked)initSortable();
+  if(isEditMode&&!locked)initSortable();
   updateDashboard();updateStatus();
 }
 
@@ -1626,7 +1669,7 @@ function handleDragEnd(evt){
 // EDIT / ADD / DELETE BLOCKS
 // ============================================================
 function openEditBlockModal(day,slot,idx){
-  if(locked){showToast('🔒 Planning verrouillé');return;}
+  if(!canEdit())return;
   const item=planningData[day]&&planningData[day][slot]&&planningData[day][slot][idx];
   if(!item)return;
   const agSel=document.getElementById('editBlockAgent');
@@ -1652,7 +1695,7 @@ function saveEditBlock(){
   showToast(`✏️ Bloc modifié`);
 }
 function openAddBlockModal(day,slot){
-  if(locked){showToast('🔒 Planning verrouillé');return;}
+  if(!canEdit())return;
   document.getElementById('blockDay').value=day;
   document.getElementById('blockSlot').value=slot;
   document.getElementById('blockAgent').innerHTML=AGENTS.map(a=>`<option value="${a}">${a}</option>`).join('');
@@ -1672,7 +1715,7 @@ function saveBlock(){
   showToast(`➕ ${agent} · ${activity} ajouté`);
 }
 function deleteBlock(day,slot,idx){
-  if(locked){showToast('🔒 Planning verrouillé');return;}
+  if(!canEdit())return;
   const arr=planningData[day]&&planningData[day][slot];
   if(!arr)return;
   arr.splice(idx,1);
@@ -1776,14 +1819,14 @@ function renderAgents(){
 }
 
 function toggleAgentAllDays(agent){
-  if(locked){showToast('🔒 Planning verrouillé');return;}
+  if(!canEdit())return;
   if(!presence[agent])presence[agent]={};
   const allPresent=DAYS.every(d=>{const h=getHalfDay(agent,d);return h.matin&&h.apm;});
   DAYS.forEach(d=>presence[agent][d]=allPresent?{matin:false,apm:false}:{matin:true,apm:true});
   saveWeekData();renderAgents();renderPlanning();
 }
 function toggleAgentDay(agent,day){
-  if(locked){showToast('🔒 Planning verrouillé');return;}
+  if(!canEdit())return;
   if(isDayFerie(day)){showToast('🏖 Jour férié — pas de présence');return;}
   if(!presence[agent]){presence[agent]={};DAYS.forEach(d=>presence[agent][d]=true);}
   presence[agent][day]=!presence[agent][day];
@@ -1791,7 +1834,7 @@ function toggleAgentDay(agent,day){
   showToast(`${agent} — ${day}: ${presence[agent][day]?'présent':'absent'}`);
 }
 function toggleAllAgents(){
-  if(locked){showToast('🔒 Planning verrouillé');return;}
+  if(!canEdit())return;
   const allOn=AGENTS.every(a=>!isAgentFullyAbsent(a));
   AGENTS.forEach(a=>{if(!presence[a])presence[a]={};DAYS.forEach(d=>presence[a][d]=!allOn);});
   saveWeekData();renderAgents();renderPlanning();
@@ -2111,6 +2154,26 @@ function showToast(msg){
 // ============================================================
 // ADMIN — RÈGLES CONFIGURABLES
 // ============================================================
+function renderAdminPlages(){
+  const c=document.getElementById('adminPlageRulesList');
+  if(!c)return;
+  const plageRules=fixedRules.filter(r=>r.type==='plage');
+  if(!plageRules.length){c.innerHTML='<div style="font-size:.78rem;color:var(--text2);padding:8px;">Aucune plage contrainte fixe.</div>';return;}
+  let h='';
+  plageRules.forEach((r,i)=>{
+    const realIdx=fixedRules.indexOf(r);
+    h+=`<div class="rule-row ${r.enabled?'':'rule-disabled'}">
+      <input type="checkbox" class="rule-toggle" ${r.enabled?'checked':''} onchange="toggleRule(${realIdx},this.checked)"/>
+      <div class="rule-info">
+        <div class="rule-name">🚧 ${r.plageTitre||r.desc||'Plage contrainte'} — ${r.day} ${r.slot}</div>
+        <div class="rule-detail">${r.plageBlockedAgents&&r.plageBlockedAgents.length?'Bloqués: '+r.plageBlockedAgents.join(', '):'Aucun agent bloqué'}${r.plageComment?' | '+r.plageComment:''}</div>
+      </div>
+      <button class="rule-edit-btn" onclick="openRuleEditModal(${realIdx})">✏️</button>
+      <button class="rule-del" onclick="deleteRule(${realIdx})">🗑</button>
+    </div>`;
+  });
+  c.innerHTML=h;
+}
 function renderAdminRules(){
   const c=document.getElementById('adminRulesList');
   if(!fixedRules.length){c.innerHTML='<div style="font-size:.78rem;color:var(--text2);padding:8px;">Aucune règle. Ajoutez-en une ci-dessous.</div>';return;}
@@ -2174,18 +2237,18 @@ function saveRuleEdit(){
   showToast(isNew?'➕ Règle ajoutée':'✏️ Règle mise à jour');
 }
 function openAdminModal(){
-  document.getElementById('adminTitleInput').value=appTitle;
-  renderAdminRules();showAdminTab('rules');
+  renderAdminRules();renderAdminPlages();showAdminTab('rules');
   renderActivitiesList();updateAllActivitySelects();
   document.getElementById('modalAdmin').style.display='flex';
 }
 function showAdminTab(t){
-  ['rules','title','export','activities'].forEach(tab=>{
+  ['rules','export','activities','plages'].forEach(tab=>{
     const p=document.getElementById('adminTab'+tab.charAt(0).toUpperCase()+tab.slice(1));
     if(p)p.style.display=(tab===t)?'block':'none';
     const b=document.getElementById('aTab-'+tab);
     if(b)b.classList.toggle('active',tab===t);
   });
+  if(t==='plages')renderAdminPlages();
 }
 function saveAdminTitle(){
   const v=(document.getElementById('adminTitleInput').value.trim())||DEFAULT_TITLE;
@@ -2340,12 +2403,105 @@ function checkPizzaEgg(titre){
 // ============================================================
 // MODAL CLOSE
 // ============================================================
-const MODALS=['modalNote','modalPlage','modalPlageEdit','modalTeam','modalAddBlock','modalHistory','modalEditBlock','modalTitle','modalAdmin','modalRuleEdit','modalWizard','modalUserName'];
+const MODALS=['modalNote','modalPlage','modalPlageEdit','modalTeam','modalAddBlock','modalHistory','modalEditBlock','modalAdmin','modalRuleEdit','modalWizard','modalUserName','modalEditPin'];
 MODALS.forEach(id=>{
   const el=document.getElementById(id);
   if(el)el.addEventListener('click',function(e){if(e.target===this)closeModal(id);});
 });
 document.addEventListener('keydown',e=>{if(e.key==='Escape')MODALS.forEach(id=>closeModal(id));});
+
+// ============================================================
+// MODE VISITEUR / ÉDITEUR
+// ============================================================
+function checkEditSession(){
+  const s=localStorage.getItem(EDIT_SESSION_KEY);
+  if(s){try{const d=JSON.parse(s);if(Date.now()-d.at<8*3600*1000){isEditMode=true;return;}}catch(e){}}
+  isEditMode=false;
+}
+function openEditPinModal(){
+  document.getElementById('editPinInput').value='';
+  document.getElementById('modalEditPin').style.display='flex';
+  setTimeout(()=>document.getElementById('editPinInput').focus(),80);
+}
+async function verifyEditPin(){
+  const pin=document.getElementById('editPinInput').value.trim();
+  if(!pin){showToast('⚠ Saisissez le code');return;}
+  let storedPin=null;
+  if(db){try{const snap=await db.ref('planning/config/editPin').get();storedPin=snap.val();}catch(e){}}
+  if(!storedPin)storedPin=localStorage.getItem('ft-edit-pin');
+  if(storedPin&&pin===storedPin){
+    isEditMode=true;
+    localStorage.setItem(EDIT_SESSION_KEY,JSON.stringify({at:Date.now()}));
+    closeModal('modalEditPin');
+    renderAll();updateLockUI();
+    updateOnlineStatus();
+    showToast('✅ Mode édition activé — Bienvenue !');
+  } else {
+    showToast('❌ Code incorrect');
+    document.getElementById('editPinInput').value='';
+  }
+}
+function exitEditMode(){
+  isEditMode=false;
+  localStorage.removeItem(EDIT_SESSION_KEY);
+  renderAll();updateLockUI();
+  showToast('👁 Mode visiteur');
+}
+async function saveEditPin(){
+  const pin=document.getElementById('adminEditPinInput').value.trim();
+  if(pin.length<4){showToast('⚠ Code minimum 4 caractères');return;}
+  if(db){try{await db.ref('planning/config/editPin').set(pin);}catch(e){}}
+  localStorage.setItem('ft-edit-pin',pin);
+  showToast('🔑 Code de modification mis à jour');
+}
+function canEdit(){
+  if(!isEditMode){openEditPinModal();return false;}
+  if(locked){showToast('🔒 Planning verrouillé');return false;}
+  return true;
+}
+
+// ============================================================
+// UTILISATEURS CONNECTÉS
+// ============================================================
+let _onlineRef=null;
+let _myOnlineKey=null;
+function initOnlinePresence(){
+  if(!db)return;
+  const userId='user-'+Math.random().toString(36).slice(2,9);
+  const onlinePath='planning/online/'+userId;
+  _myOnlineKey=userId;
+  const myData={name:userName||'Visiteur',isEditor:isEditMode,at:Date.now()};
+  db.ref(onlinePath).set(myData);
+  db.ref(onlinePath).onDisconnect().remove();
+  _onlineRef=db.ref('planning/online');
+  _onlineRef.on('value',snap=>{
+    const users=snap.val()||{};
+    renderOnlineUsers(users);
+  });
+}
+function renderOnlineUsers(users){
+  const el=document.getElementById('onlineUsersBar');
+  if(!el)return;
+  const list=Object.values(users);
+  if(!list.length){el.style.display='none';return;}
+  el.style.display='flex';
+  let html='<span style="font-size:.7rem;font-weight:600;color:var(--text2);margin-right:4px;">👥 En ligne :</span>';
+  list.forEach(u=>{
+    const isMe=u.name===(userName||'Visiteur');
+    const col=u.isEditor?'#5a67f2':'#6b7099';
+    const icon=u.isEditor?'✏️':'👁';
+    html+=`<span style="display:inline-flex;align-items:center;gap:3px;background:${u.isEditor?'#eef0ff':'#f0f1f7'};border:1.5px solid ${u.isEditor?'#c0d0f8':'#e4e6f0'};border-radius:20px;padding:2px 8px;font-size:.7rem;font-weight:600;color:${col};">
+      <span style="width:6px;height:6px;border-radius:50%;background:#38c8a8;display:inline-block;"></span>
+      ${icon} ${u.name}${isMe?' (vous)':''}
+    </span>`;
+  });
+  el.innerHTML=html;
+}
+function updateOnlineStatus(){
+  if(!db||!_myOnlineKey)return;
+  db.ref('planning/online/'+_myOnlineKey+'/isEditor').set(isEditMode);
+  db.ref('planning/online/'+_myOnlineKey+'/name').set(userName||'Visiteur');
+}
 
 // ============================================================
 // SIDEBAR RESPONSIVE (mobile)
@@ -2371,6 +2527,7 @@ async function init(){
   try {
     document.getElementById('planningTable').innerHTML='<div style="text-align:center;padding:60px;color:var(--text2);font-size:.9rem;">⏳ Chargement…</div>';
     await initState();
+    checkEditSession();
   } catch(e) {
     console.error('initState error:', e);
     updateSyncUI('err');
@@ -2397,6 +2554,7 @@ async function init(){
   } else if(!Object.keys(planningData).length){
     setTimeout(()=>{ try{generatePlanning();}catch(e){} }, 200);
   }
+  try { initOnlinePresence(); } catch(e){}
 }
 document.addEventListener('DOMContentLoaded',init);
 </script>
@@ -2406,23 +2564,25 @@ document.addEventListener('DOMContentLoaded',init);
     <div class="modal-title">⚙️ Paramètres administrateur</div>
     <div class="admin-tabs">
       <button class="admin-tab-btn active" id="aTab-rules" onclick="showAdminTab('rules')">📋 Règles fixes</button>
-      <button class="admin-tab-btn" id="aTab-title" onclick="showAdminTab('title')">✏️ Titre</button>
       <button class="admin-tab-btn" id="aTab-export" onclick="showAdminTab('export')">📦 Import/Export</button>
       <button class="admin-tab-btn" id="aTab-activities" onclick="showAdminTab('activities')">🎯 Activités</button>
+      <button class="admin-tab-btn" id="aTab-plages" onclick="showAdminTab('plages')">🚧 Plages fixes</button>
     </div>
     <div id="adminTabRules">
       <div style="font-size:.76rem;color:var(--text2);margin-bottom:10px;line-height:1.5;">Règles appliquées à chaque génération. Les règles de votre équipe sont pré-chargées — modifiez-les librement.</div>
       <div id="adminRulesList" style="max-height:340px;overflow-y:auto;margin-bottom:10px;"></div>
       <button class="btn-app btn-secondary-app" style="width:100%;" onclick="openRuleEditModal(null)">＋ Ajouter une règle fixe</button>
     </div>
-    <div id="adminTabTitle" style="display:none;">
-      <label class="modal-label">Titre de l'application</label>
-      <input class="modal-input" type="text" id="adminTitleInput" maxlength="60"/>
-      <div style="font-size:.7rem;color:var(--text2);margin-top:-4px;margin-bottom:8px;">Affiché dans l'onglet, les favoris et l'en-tête.</div>
-      <div class="modal-actions"><button class="btn-app btn-primary-app" onclick="saveAdminTitle()">Enregistrer</button></div>
-    </div>
     <div id="adminTabExport" style="display:none;">
       <div style="display:flex;flex-direction:column;gap:10px;">
+        <div style="background:linear-gradient(135deg,#3a3a5c,#2a2a44);border:1.5px solid var(--accent);border-radius:10px;padding:12px 14px;margin-bottom:10px;">
+          <label class="modal-label" style="color:#a8b8ff;font-size:.8rem;">🔑 Code d'accès modification</label>
+          <div style="font-size:.72rem;color:var(--text2);margin-bottom:8px;">Ce code est demandé aux membres de l'équipe pour modifier le planning. Les visiteurs peuvent consulter sans code.</div>
+          <div style="display:flex;gap:7px;">
+            <input class="modal-input" type="text" id="adminEditPinInput" placeholder="Nouveau code (min 4 car.)…" style="margin-bottom:0;flex:1;"/>
+            <button class="btn-app btn-primary-app" onclick="saveEditPin()">💾 Enregistrer</button>
+          </div>
+        </div>
         <div><label class="modal-label">Exporter configuration (équipe + règles + titre)</label>
           <button class="btn-app btn-primary-app" style="width:100%;" onclick="exportConfig()">📥 Télécharger config (.json)</button></div>
         <div><label class="modal-label">Importer une configuration</label>
@@ -2447,6 +2607,11 @@ document.addEventListener('DOMContentLoaded',init);
       <div style="margin-top:8px;">
         <button class="btn-app btn-secondary-app" style="font-size:.74rem;" onclick="resetActivities()">↺ Restaurer la liste par défaut</button>
       </div>
+    </div>
+    <div id="adminTabPlages" style="display:none;">
+      <div style="font-size:.76rem;color:var(--text2);margin-bottom:10px;line-height:1.5;">Plages contraintes récurrentes appliquées automatiquement à chaque génération.</div>
+      <div id="adminPlageRulesList" style="max-height:300px;overflow-y:auto;margin-bottom:10px;"></div>
+      <button class="btn-app btn-secondary-app" style="width:100%;" onclick="openRuleEditModal(null,'plage')">＋ Ajouter une plage fixe</button>
     </div>
     <div class="modal-actions" style="margin-top:14px;"><button class="btn-app btn-secondary-app" onclick="closeModal('modalAdmin')">Fermer</button></div>
   </div>
@@ -2525,6 +2690,23 @@ document.addEventListener('DOMContentLoaded',init);
     <input class="modal-input" type="text" id="userNameInput" placeholder="ex : Michelle, Selim…" maxlength="30"/>
     <div class="modal-actions">
       <button class="btn-app btn-primary-app" onclick="saveUserName()">✓ Continuer</button>
+    </div>
+  </div>
+</div>
+<!-- MODAL CODE PIN ÉDITEUR -->
+<div class="modal-overlay" id="modalEditPin" style="display:none;">
+  <div class="modal-box">
+    <div class="modal-title">🔑 Accès modification</div>
+    <div style="font-size:.82rem;color:var(--text2);margin-bottom:14px;line-height:1.6;">
+      Saisissez le code pour accéder au mode édition.<br>
+      <span style="font-size:.75rem;opacity:.7;">Les visiteurs peuvent consulter le planning sans code.</span>
+    </div>
+    <label class="modal-label">Code d'accès</label>
+    <input class="modal-input" type="password" id="editPinInput" placeholder="••••" maxlength="20"
+      onkeydown="if(event.key==='Enter')verifyEditPin()"/>
+    <div class="modal-actions">
+      <button class="btn-app btn-secondary-app" onclick="closeModal('modalEditPin')">Visiteur</button>
+      <button class="btn-app btn-primary-app" onclick="verifyEditPin()">✓ Accéder</button>
     </div>
   </div>
 </div>
