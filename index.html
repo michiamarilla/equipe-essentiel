@@ -346,6 +346,7 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-
   <div class="header-actions">
     <div id="syncIndicator" class="sync-indicator sync-loading">⏳ Connexion…</div>
     <div class="user-name-chip" onclick="openUserNameModal()" title="Votre prénom">👤 <span id="userNameDisplay">—</span></div>
+    <button class="btn-app btn-team-app" onclick="openTeamModal()"><span>👥</span><span class="btn-label">Équipe</span></button>
     <div id="modeBadge" class="lock-badge unlocked" onclick="isEditMode?toggleLock():openEditPinModal()" style="cursor:pointer;">
       <span id="modeIcon">👁</span> <span id="modeLabel">Visiteur</span>
     </div>
@@ -495,8 +496,15 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-
     <select class="modal-input" id="plageSlot">
       <option value="Matin">Matin</option><option value="Après-midi">Après-midi</option>
     </select>
-    <label class="modal-label">Titre</label>
-    <input class="modal-input" type="text" id="plageTitre" placeholder="ex: Réunion DRH, Formation…"/>
+    <label class="modal-label">Type de plage</label>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:9px;">
+      <select class="modal-input" id="plageTypeSelect" style="margin-bottom:0;flex:1;" onchange="onPlageTypeSelect(this.value)">
+        <option value="">-- Choisir un type --</option>
+      </select>
+      <div id="plageColorPreview" style="display:none;width:22px;height:22px;border-radius:50%;flex-shrink:0;border:2px solid #eee;"></div>
+    </div>
+    <input class="modal-input" type="text" id="plageTitreCustom" placeholder="Nom personnalisé…" style="display:none;"/>
+    <input type="hidden" id="plageTitre"/>
     <label class="modal-label">Commentaire (optionnel)</label>
     <textarea class="modal-textarea" id="plageComment" placeholder="Détails…" style="min-height:55px;margin-bottom:9px;"></textarea>
     <label class="modal-label">Agents bloqués pendant cette plage <span style="font-size:0.68rem;color:var(--text2);font-weight:400;">(cocher = ne peut pas faire son activité normale)</span></label>
@@ -739,13 +747,22 @@ function saveUserName() {
 // ============================================================
 // CONSTANTS
 // ============================================================
-const AGENTS_DEFAULT=['Selim','Michelle','Charlotte','Emilien','Jordan'];
-const AGENT_COLORS_DEFAULT={Selim:'#5a67f2',Michelle:'#f5a623',Charlotte:'#e8445a',Emilien:'#7c5cbf',Jordan:'#20b2aa'};
+const AGENTS_DEFAULT=['Michelle','Charlotte','Marvin','Selim','Emilien'];
+const AGENT_COLORS_DEFAULT={Michelle:'#f5a623',Charlotte:'#e8445a',Marvin:'#38c8a8',Selim:'#5a67f2',Emilien:'#7c5cbf'};
 const COLOR_PALETTE=['#5a67f2','#38c8a8','#f5a623','#e8445a','#7c5cbf','#20b2aa','#e07b50','#3a9bd5','#c06080','#60a060'];
 const ACTIVITIES_DEFAULT=['A&P','DYN / MER','CVM','Dossier transversal','Corner Essentiel','Permanence Visio','Back Office',"Segmentation travail d'équipe",'Collectif Visio','Collectif Physique','Libre','Jeudi de la collab'];
 let ACTIVITIES=[...ACTIVITIES_DEFAULT];
 const ACT_CLASS={'A&P':'act-ap','DYN / MER':'act-dyn','CVM':'act-cvm','Dossier transversal':'act-dossier','Corner Essentiel':'act-corner','Permanence Visio':'act-visio','Back Office':'act-bo',"Segmentation travail d'équipe":'act-seg','Collectif Visio':'act-colvision','Collectif Physique':'act-colphys','Libre':'act-libre','Jeudi de la collab':'act-collab'};
 const ACT_COLORS_HEX={'A&P':'#3355cc','DYN / MER':'#b85c00','CVM':'#8833bb','Dossier transversal':'#1a7a58','Corner Essentiel':'#886600','Permanence Visio':'#1155aa','Back Office':'#5533aa',"Segmentation travail d'équipe":'#007755','Collectif Visio':'#aa2266','Collectif Physique':'#aa5500','Libre':'#555','Jeudi de la collab':'#9b59b6'};
+// Types de plages contraintes prédéfinis
+const PLAGE_TYPES_DEFAULT=[
+  {name:'MANAC',color:'#e8445a'},
+  {name:'Tablette',color:'#5a67f2'},
+  {name:'DPA collectif',color:'#f5a623'},
+  {name:'AIC',color:'#7c5cbf'},
+  {name:'AZLA',color:'#38c8a8'}
+];
+let PLAGE_TYPES=[...PLAGE_TYPES_DEFAULT];
 const DAYS=['Lundi','Mardi','Mercredi','Jeudi','Vendredi'];
 const SLOTS=['Matin','Après-midi'];
 // Règle temps partiel Charlotte
@@ -834,6 +851,7 @@ function getWeekKey(offset){
 }
 
 async function initState(){
+  loadPlageTypes();
   const sw = localStorage.getItem('ft-week');
   currentWeekOffset = sw ? parseInt(sw) : 0;
 
@@ -1202,120 +1220,157 @@ let cvmRotationIdx=0;
 function getManualSlotItems(day,slot,blocked){
   const arr=(planningData[day]&&planningData[day][slot])||[];
   return arr
-    .filter(x=>x.manual&&isAgentPresentOnDay(x.agent,day)&&!blocked.has(x.agent))
+    .filter(x=>x.manual&&isAgentPresentSlot(x.agent,day,slot)&&!blocked.has(x.agent))
     .map(x=>({...x,manual:true}));
+}
+
+function availableForSlot(day,slot){
+  const blocked=getBlockedAgentsForSlot(day,slot);
+  return AGENTS.filter(a=>isAgentPresentSlot(a,day,slot)&&!blocked.has(a));
+}
+
+function activeOnSlot(day,slot){
+  return AGENTS.filter(a=>isAgentPresentSlot(a,day,slot));
 }
 
 function generatePlanning(message='⚡ Planning généré'){
   if(!canEdit())return;
   cvmRotationIdx=0;
-  const newPlan={};const dynCount={};
-  AGENTS.forEach(a=>dynCount[a]=0);
+
+  // Compteurs d'activités par agent pour la semaine (équité)
+  const weekCount={}; // weekCount[agent][activity] = nb fois cette semaine
+  AGENTS.forEach(a=>{weekCount[a]={};});
+
+  const newPlan={};
   DAYS.forEach(d=>{newPlan[d]={};SLOTS.forEach(s=>{newPlan[d][s]=[];});});
 
-  function activeOnDay(day){return AGENTS.filter(a=>isAgentPresentOnDay(a,day));}
-  function availableForSlot(day,slot){
-    const blocked=getBlockedAgentsForSlot(day,slot);
-    return activeOnDay(day).filter(a=>!blocked.has(a));
+  // Helper: agents présents sur ce slot
+  function slotAgents(day,slot){
+    return AGENTS.filter(a=>isAgentPresentSlot(a,day,slot));
   }
-  DAYS.forEach(d=>SLOTS.forEach(s=>{
-    if(isDayFerie(d))return;
-    const blocked=getBlockedAgentsForSlot(d,s);
-    getManualSlotItems(d,s,blocked).forEach(x=>{
-      if(x.activity==='DYN / MER')dynCount[x.agent]++;
-    });
-  }));
 
+  // Helper: agents disponibles (présents + non bloqués)
+  function availAgents(day,slot){
+    const blocked=getBlockedAgentsForSlot(day,slot);
+    return slotAgents(day,slot).filter(a=>!blocked.has(a));
+  }
+
+  // Helper: choisir l'activité la plus équitable pour un agent
+  // parmi un pool, en évitant ce qu'il a déjà trop eu
+  function pickActivity(agent,pool,slotItems,excludeActs=[]){
+    const eligible=pool.filter(act=>{
+      if(excludeActs.includes(act))return false;
+      if(act==='DYN / MER'&&(weekCount[agent]['DYN / MER']||0)>=1)return false;
+      if(act==='Collectif Visio'&&slotItems.filter(x=>x.activity==='Collectif Visio').length>=2)return false;
+      if(act==='Collectif Physique'&&slotItems.filter(x=>x.activity==='Collectif Physique').length>=2)return false;
+      return true;
+    });
+    if(!eligible.length)return 'Libre';
+    // Trier par fréquence croissante (activité la moins faite en premier)
+    eligible.sort((a,b)=>(weekCount[agent][a]||0)-(weekCount[agent][b]||0));
+    return eligible[0];
+  }
+
+  // Incrémenter le compteur
+  function countAct(agent,act){
+    if(!weekCount[agent])weekCount[agent]={};
+    weekCount[agent][act]=(weekCount[agent][act]||0)+1;
+  }
+
+  const enabledRules=fixedRules.filter(r=>r.enabled&&r.type!=='plage');
   const afterFerieDays=new Set();
   DAYS.forEach((d,i)=>{if(isDayFerie(d)&&i+1<DAYS.length)afterFerieDays.add(DAYS[i+1]);});
 
-  const enabledRules=fixedRules.filter(r=>r.enabled);
+  // Comptabiliser les blocs manuels existants
+  DAYS.forEach(d=>SLOTS.forEach(s=>{
+    if(isDayFerie(d))return;
+    const blocked=getBlockedAgentsForSlot(d,s);
+    getManualSlotItems(d,s,blocked).forEach(x=>{countAct(x.agent,x.activity);});
+  }));
 
   DAYS.forEach(day=>{
     if(isDayFerie(day))return;
     SLOTS.forEach(slot=>{
-      const dayActive=activeOnDay(day);
-      const avail=availableForSlot(day,slot);
+      const dayActive=slotAgents(day,slot);
+      const avail=availAgents(day,slot);
       const blocked=getBlockedAgentsForSlot(day,slot);
       const slotRules=enabledRules.filter(r=>r.day===day&&r.slot===slot);
       newPlan[day][slot]=getManualSlotItems(day,slot,blocked);
 
-      // ---- RÈGLES FIXES CONFIGURABLES ----
+      // ---- RÈGLES FIXES ----
       if(slotRules.length>0){
         slotRules.forEach(rule=>{
           const targets=rule.agents&&rule.agents.length>0
-            ?rule.agents.filter(a=>isAgentPresentOnDay(a,day))
+            ?rule.agents.filter(a=>isAgentPresentSlot(a,day,slot))
             :dayActive;
           const count=rule.minAgents>0?Math.min(rule.minAgents,targets.length):targets.length;
-          const sh=shuffle(targets);
-          sh.slice(0,count).forEach(a=>{
-            if(rule.nonBlocking){
-              newPlan[day][slot].push({agent:a,activity:rule.activity,fixed:false,note:'📅 Collab'});
-            } else if(!newPlan[day][slot].find(x=>x.agent===a)){
-              newPlan[day][slot].push({agent:a,activity:rule.activity,fixed:false,note:''});
+          shuffle(targets).slice(0,count).forEach(a=>{
+            if(!newPlan[day][slot].find(x=>x.agent===a)){
+              newPlan[day][slot].push({agent:a,activity:rule.activity,fixed:false,note:'',fromRule:true});
+              countAct(a,rule.activity);
             }
           });
         });
         const assigned=new Set(newPlan[day][slot].map(x=>x.agent));
         const remaining=dayActive.filter(a=>!assigned.has(a));
+        const slotItems=[...newPlan[day][slot]];
         remaining.forEach(agent=>{
           if(blocked.has(agent)){newPlan[day][slot].push({agent,activity:'Libre',fixed:false,note:'⚠ Plage contrainte'});return;}
           const pool=['A&P','CVM','Permanence Visio','DYN / MER','Back Office','Corner Essentiel','Libre'];
-          let act='Libre';
-          for(const c of pool){if(c==='DYN / MER'&&dynCount[agent]>=1)continue;act=c;break;}
-          if(act==='DYN / MER')dynCount[agent]++;
+          const act=pickActivity(agent,pool,slotItems);
+          countAct(agent,act);
+          slotItems.push({agent,activity:act,fixed:false,note:''});
           newPlan[day][slot].push({agent,activity:act,fixed:false,note:''});
         });
         return;
       }
 
-      // ---- AFTER-FERIE RULE ----
-      if(afterFerieDays.has(day)){
-        const assigned=new Set(newPlan[day][slot].map(x=>x.agent));
-        const sh=shuffle(dayActive.filter(a=>!assigned.has(a)));
-        if(dayActive.length<=2){sh.forEach(a=>newPlan[day][slot].push({agent:a,activity:'CVM',fixed:false,note:''}));}
-        else{
-          const rotated=[...sh.slice(cvmRotationIdx%sh.length),...sh.slice(0,cvmRotationIdx%sh.length)];
-          const cvm2=slot==='Matin'?rotated.slice(0,2):rotated.slice(2,4).length===2?rotated.slice(2,4):rotated.slice(0,2);
-          const cvm2Set=new Set(cvm2);
-          cvm2.forEach(a=>newPlan[day][slot].push({agent:a,activity:'CVM',fixed:false,note:''}));
-          sh.filter(a=>!cvm2Set.has(a)).forEach((a,i)=>{
-            const pool=['A&P','Back Office','Permanence Visio','Corner Essentiel','DYN / MER','Libre'];
-            let act=pool[i%pool.length];
-            if(act==='DYN / MER'&&dynCount[a]>=1)act='Back Office';
-            if(act==='DYN / MER')dynCount[a]++;
-            newPlan[day][slot].push({agent:a,activity:act,fixed:false,note:''});
-          });
-          if(slot==='Après-midi')cvmRotationIdx+=2;
-        }
-        return;
-      }
-
-      // ---- CRÉNEAU GÉNÉRIQUE ----
+      // ---- CRÉNEAU GÉNÉRIQUE (équitable) ----
       const assigned=new Set(newPlan[day][slot].map(x=>x.agent));
-      const base=(avail.length>0?avail:dayActive).filter(a=>!assigned.has(a));
-      const sh=shuffle(base);
-      let apDone=false,cvmDone=false,visioDone=false;
+      const base=avail.filter(a=>!assigned.has(a));
+
+      // Trier les agents par charge totale croissante (celui qui a le moins d'activités passe en premier)
+      const agentLoad=a=>Object.values(weekCount[a]||{}).reduce((s,v)=>s+v,0);
+      const sorted=[...base].sort((a,b)=>agentLoad(a)-agentLoad(b));
+
       const slotItems=[...newPlan[day][slot]];
-      sh.forEach(agent=>{
-        let act;
-        if(!apDone){act='A&P';apDone=true;}
-        else if(!cvmDone){act='CVM';cvmDone=true;}
-        else if(!visioDone&&dayActive.length>=3){act='Permanence Visio';visioDone=true;}
-        else{
-          const pool=['DYN / MER','Back Office','Corner Essentiel','Collectif Visio','Collectif Physique','Libre','CVM'];
-          act='Libre';
-          for(const c of pool){
-            if(c==='DYN / MER'&&dynCount[agent]>=1)continue;
-            if(c==='Collectif Visio'&&slotItems.filter(x=>x.activity==='Collectif Visio').length>=2)continue;
-            if(c==='Collectif Physique'&&slotItems.filter(x=>x.activity==='Collectif Physique').length>=2)continue;
-            act=c;break;
-          }
+      const usedActs=new Set(slotItems.map(x=>x.activity));
+
+      // Activités prioritaires à couvrir dans ce slot
+      const priorities=['A&P','CVM','Permanence Visio'];
+      const assigned2=new Set(slotItems.map(x=>x.agent));
+
+      // 1er passage: assigner les activités prioritaires manquantes
+      priorities.forEach(pAct=>{
+        if(usedActs.has(pAct))return; // déjà couverte
+        // Trouver l'agent le plus adapté (celui qui l'a le moins faite)
+        const candidate=sorted.find(a=>!assigned2.has(a)&&isAgentPresentSlot(a,day,slot)&&(pAct!=='DYN / MER'||(weekCount[a]['DYN / MER']||0)<1));
+        if(candidate){
+          slotItems.push({agent:candidate,activity:pAct,fixed:false,note:''});
+          assigned2.add(candidate);
+          usedActs.add(pAct);
+          countAct(candidate,pAct);
         }
-        if(act==='DYN / MER')dynCount[agent]++;
-        slotItems.push({agent,activity:act,fixed:false,note:''});
       });
-      blocked.forEach(a=>{if(isAgentPresentOnDay(a,day))slotItems.push({agent:a,activity:'Libre',fixed:false,note:'⚠ Plage contrainte'});});
+
+      // 2ème passage: assigner le reste des agents équitablement
+      sorted.forEach(agent=>{
+        if(assigned2.has(agent))return;
+        if(!isAgentPresentSlot(agent,day,slot))return;
+        const pool=['A&P','CVM','Permanence Visio','DYN / MER','Back Office','Corner Essentiel','Collectif Visio','Collectif Physique','Libre'];
+        const act=pickActivity(agent,pool,slotItems);
+        slotItems.push({agent,activity:act,fixed:false,note:''});
+        assigned2.add(agent);
+        countAct(agent,act);
+      });
+
+      // Agents bloqués par plage
+      blocked.forEach(a=>{
+        if(isAgentPresentSlot(a,day,slot)&&!assigned2.has(a)){
+          slotItems.push({agent:a,activity:'Libre',fixed:false,note:'⚠ Plage contrainte'});
+        }
+      });
+
       newPlan[day][slot]=slotItems;
     });
   });
@@ -1378,9 +1433,13 @@ function openAddPlageModal(day,slot){
   if(slot)document.getElementById('plageSlot').value=slot;
   document.getElementById('plageTitre').value='';
   document.getElementById('plageComment').value='';
+  updatePlageTypeSelect();
+  document.getElementById('plageTitreCustom').value='';
+  document.getElementById('plageTitreCustom').style.display='none';
+  const cp=document.getElementById('plageColorPreview');if(cp)cp.style.display='none';
   buildAgentCheckList('plageAgentsList',[]);
   document.getElementById('modalPlage').style.display='flex';
-  setTimeout(()=>document.getElementById('plageTitre').focus(),80);
+  setTimeout(()=>document.getElementById('plageTypeSelect').focus(),80);
 }
 // ============================================================
 // RECOMPUTE A SINGLE SLOT after plage change
@@ -1442,14 +1501,15 @@ function recomputeSlot(day, slot){
 function savePlage(){
   const day=document.getElementById('plageDay').value;
   const slot=document.getElementById('plageSlot').value;
-  const titre=document.getElementById('plageTitre').value.trim();
+  const titre=getPlageTitle();
+  const plageColor=getPlageColor();
   const comment=document.getElementById('plageComment').value.trim();
   const blockedAgents=getCheckedBlockedAgents('plageAgentsList');
   if(!titre){showToast('⚠ Titre requis');
   checkPizzaEgg(titre);return;}
   if(!plageData[day])plageData[day]={};
   if(!plageData[day][slot])plageData[day][slot]=[];
-  plageData[day][slot].push({titre,comment,agent:'',blockedAgents});
+  plageData[day][slot].push({titre,comment,agent:'',blockedAgents,color:plageColor});
   // Recalculate the affected slot
   if(blockedAgents.length>0) recomputeSlot(day, slot);
   closeModal('modalPlage');
@@ -1559,7 +1619,7 @@ function renderPlanning(){
       const plages=(plageData[day]&&plageData[day][slot])||[];
       const activeOnThisDay=AGENTS.filter(a=>isAgentPresentOnDay(a,day));
       const allAbsent=!ferie&&activeOnThisDay.length===0;
-      const visibleAssignments=assignments.filter(x=>isAgentPresentOnDay(x.agent,day));
+      const visibleAssignments=assignments.filter(x=>isAgentPresentSlot(x.agent,day,slot));
 
       html+=`<td class="${allAbsent?'absent-cell':ferie?'ferie-day-col':''}">`;
       if(ferie){
@@ -1571,7 +1631,7 @@ function renderPlanning(){
         }
         // Activity cards
         assignments.forEach((item,idx2)=>{
-          if(!isAgentPresentOnDay(item.agent,day))return;
+          if(!isAgentPresentSlot(item.agent,day,slot))return;
           const actClass=ACT_CLASS[item.activity]||'act-libre';
           const agentColor=AGENT_COLORS[item.agent]||'#888';
           const initials=item.agent.substring(0,2).toUpperCase();
@@ -1601,9 +1661,10 @@ function renderPlanning(){
         // Plage cards
         plages.forEach((p,pi)=>{
           const bCount=(p.blockedAgents&&p.blockedAgents.length)||0;
-          html+=`<div class="plage-card" data-plage="1">
+          const pColor=p.color||'#ff9f43';
+          html+=`<div class="plage-card" data-plage="1" style="border-color:${pColor};background:linear-gradient(135deg,${pColor}12,${pColor}08);">
             <div class="plage-header">
-              <div class="plage-title">🚧 ${p.titre.replace(/</g,'&lt;')}</div>
+              <div class="plage-title" style="color:${pColor};">🚧 ${p.titre.replace(/</g,'&lt;')}</div>
               ${(isEditMode&&!locked)?`<div style="display:flex;gap:2px;">
                 <button class="plage-edit" onclick="event.stopPropagation();editPlage('${day}','${slot}',${pi})">✏️</button>
                 <button class="plage-del" onclick="event.stopPropagation();deletePlage('${day}','${slot}',${pi})">✕</button>
@@ -2110,6 +2171,86 @@ function renderActivitiesList(){
   });
   c.innerHTML=h||'<div style="font-size:.78rem;color:var(--text2);">Aucune activité.</div>';
 }
+function renderPlageTypesList(){
+  const c=document.getElementById('plageTypesList');
+  if(!c)return;
+  let h='';
+  PLAGE_TYPES.forEach((pt,i)=>{
+    h+=`<div class="activity-manage-row">
+      <div class="activity-manage-dot" style="background:${pt.color};border-radius:50%;"></div>
+      <span class="activity-manage-name">${pt.name}</span>
+      <button class="activity-manage-del" onclick="deletePlageType(${i})" title="Supprimer">🗑</button>
+    </div>`;
+  });
+  c.innerHTML=h||'<div style="font-size:.78rem;color:var(--text2);">Aucun type défini.</div>';
+  updatePlageTypeSelect();
+}
+function addPlageType(){
+  const input=document.getElementById('newPlageTypeInput');
+  const colorInput=document.getElementById('newPlageTypeColor');
+  const name=input.value.trim();
+  if(!name){showToast('⚠ Saisissez un nom');return;}
+  if(PLAGE_TYPES.find(p=>p.name===name)){showToast('⚠ Ce type existe déjà');return;}
+  PLAGE_TYPES.push({name,color:colorInput.value});
+  input.value='';
+  savePlageTypes();
+  renderPlageTypesList();
+  showToast('✅ Type "'+name+'" ajouté');
+}
+function deletePlageType(i){
+  if(!confirm('Supprimer ce type de plage ?'))return;
+  PLAGE_TYPES.splice(i,1);
+  savePlageTypes();
+  renderPlageTypesList();
+  showToast('🗑 Type supprimé');
+}
+function savePlageTypes(){
+  localStorage.setItem('ft-plage-types',JSON.stringify(PLAGE_TYPES));
+}
+function loadPlageTypes(){
+  const s=localStorage.getItem('ft-plage-types');
+  if(s){try{PLAGE_TYPES=JSON.parse(s);}catch(e){PLAGE_TYPES=[...PLAGE_TYPES_DEFAULT];}}
+}
+function updatePlageTypeSelect(){
+  const sel=document.getElementById('plageTypeSelect');
+  if(!sel)return;
+  const cur=sel.value;
+  let opts='<option value="">-- Choisir un type --</option>';
+  PLAGE_TYPES.forEach(pt=>opts+=`<option value="${pt.name}" style="color:${pt.color};">${pt.name}</option>`);
+  opts+='<option value="__custom__">✏️ Autre (saisir manuellement)…</option>';
+  sel.innerHTML=opts;
+  if(PLAGE_TYPES.find(p=>p.name===cur))sel.value=cur;
+}
+function onPlageTypeSelect(val){
+  const customInput=document.getElementById('plageTitreCustom');
+  const colorPreview=document.getElementById('plageColorPreview');
+  if(val==='__custom__'){
+    customInput.style.display='block';
+    customInput.focus();
+    if(colorPreview)colorPreview.style.display='none';
+  } else if(val){
+    customInput.style.display='none';
+    const pt=PLAGE_TYPES.find(p=>p.name===val);
+    if(colorPreview&&pt){colorPreview.style.background=pt.color;colorPreview.style.display='inline-block';}
+    if(colorPreview&&!pt)colorPreview.style.display='none';
+  } else {
+    customInput.style.display='none';
+    if(colorPreview)colorPreview.style.display='none';
+  }
+}
+function getPlageTitle(){
+  const sel=document.getElementById('plageTypeSelect');
+  if(!sel)return document.getElementById('plageTitre').value.trim();
+  if(sel.value==='__custom__')return document.getElementById('plageTitreCustom').value.trim();
+  if(sel.value)return sel.value;
+  return '';
+}
+function getPlageColor(){
+  const sel=document.getElementById('plageTypeSelect');
+  if(!sel)return '#ff9f43';
+  const pt=PLAGE_TYPES.find(p=>p.name===sel.value);
+  return pt?pt.color:'#ff9f43';
+}
 function addActivity(){
   const input=document.getElementById('newActivityInput');
   const colorInput=document.getElementById('newActivityColor');
@@ -2238,17 +2379,19 @@ function saveRuleEdit(){
 }
 function openAdminModal(){
   renderAdminRules();renderAdminPlages();showAdminTab('rules');
-  renderActivitiesList();updateAllActivitySelects();
+  renderActivitiesList();updateAllActivitySelects();renderPlageTypesList();
   document.getElementById('modalAdmin').style.display='flex';
 }
 function showAdminTab(t){
-  ['rules','export','activities','plages'].forEach(tab=>{
-    const p=document.getElementById('adminTab'+tab.charAt(0).toUpperCase()+tab.slice(1));
+  ['rules','export','activities','plages','plage-types'].forEach(tab=>{
+    const tabId='adminTab'+tab.split('-').map((s,i)=>i===0?s.charAt(0).toUpperCase()+s.slice(1):s.charAt(0).toUpperCase()+s.slice(1)).join('');
+    const p=document.getElementById(tab==='plage-types'?'adminTabPlage-types':'adminTab'+tab.charAt(0).toUpperCase()+tab.slice(1));
     if(p)p.style.display=(tab===t)?'block':'none';
     const b=document.getElementById('aTab-'+tab);
     if(b)b.classList.toggle('active',tab===t);
   });
   if(t==='plages')renderAdminPlages();
+  if(t==='plage-types')renderPlageTypesList();
 }
 function saveAdminTitle(){
   const v=(document.getElementById('adminTitleInput').value.trim())||DEFAULT_TITLE;
@@ -2567,6 +2710,7 @@ document.addEventListener('DOMContentLoaded',init);
       <button class="admin-tab-btn" id="aTab-export" onclick="showAdminTab('export')">📦 Import/Export</button>
       <button class="admin-tab-btn" id="aTab-activities" onclick="showAdminTab('activities')">🎯 Activités</button>
       <button class="admin-tab-btn" id="aTab-plages" onclick="showAdminTab('plages')">🚧 Plages fixes</button>
+      <button class="admin-tab-btn" id="aTab-plage-types" onclick="showAdminTab('plage-types')">🎨 Types plages</button>
     </div>
     <div id="adminTabRules">
       <div style="font-size:.76rem;color:var(--text2);margin-bottom:10px;line-height:1.5;">Règles appliquées à chaque génération. Les règles de votre équipe sont pré-chargées — modifiez-les librement.</div>
@@ -2612,6 +2756,18 @@ document.addEventListener('DOMContentLoaded',init);
       <div style="font-size:.76rem;color:var(--text2);margin-bottom:10px;line-height:1.5;">Plages contraintes récurrentes appliquées automatiquement à chaque génération.</div>
       <div id="adminPlageRulesList" style="max-height:300px;overflow-y:auto;margin-bottom:10px;"></div>
       <button class="btn-app btn-secondary-app" style="width:100%;" onclick="openRuleEditModal(null,'plage')">＋ Ajouter une plage fixe</button>
+    </div>
+    <div id="adminTabPlage-types" style="display:none;">
+      <div style="font-size:.76rem;color:var(--text2);margin-bottom:10px;">Types de plages contraintes disponibles lors de la création d'une plage.</div>
+      <div class="activities-list" id="plageTypesList"></div>
+      <div style="display:flex;gap:7px;margin-top:8px;">
+        <input class="modal-input" type="text" id="newPlageTypeInput" placeholder="Nom du type…" style="margin-bottom:0;flex:1;"/>
+        <input class="modal-input" type="color" id="newPlageTypeColor" value="#e8445a" style="width:42px;padding:4px;margin-bottom:0;cursor:pointer;"/>
+        <button class="btn-app btn-primary-app" onclick="addPlageType()">＋ Ajouter</button>
+      </div>
+      <div style="margin-top:8px;">
+        <button class="btn-app btn-secondary-app" style="font-size:.74rem;" onclick="PLAGE_TYPES=[...PLAGE_TYPES_DEFAULT];savePlageTypes();renderPlageTypesList();showToast('↺ Types restaurés');">↺ Restaurer par défaut</button>
+      </div>
     </div>
     <div class="modal-actions" style="margin-top:14px;"><button class="btn-app btn-secondary-app" onclick="closeModal('modalAdmin')">Fermer</button></div>
   </div>
